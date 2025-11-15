@@ -6,30 +6,7 @@ import { Check, ChevronDown, Map, MapPin } from 'lucide-react-native';
 import type { FC } from 'react';
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-// Datos estáticos de ubicaciones del Perú
-const DEPARTAMENTOS = [
-  'Lima', 'Arequipa', 'Cusco', 'La Libertad', 'Piura', 'Lambayeque', 
-  'Junín', 'Puno', 'Ica', 'Ancash', 'Cajamarca', 'Loreto', 
-  'Huánuco', 'San Martín', 'Ucayali', 'Ayacucho', 'Apurímac',
-  'Amazonas', 'Huancavelica', 'Moquegua', 'Pasco', 'Tacna', 
-  'Tumbes', 'Madre de Dios'
-];
-
-const PROVINCIAS_POR_DEPARTAMENTO: Record<string, string[]> = {
-  'Lima': ['Lima', 'Barranca', 'Cajatambo', 'Canta', 'Cañete', 'Huaral', 'Huarochirí', 'Huaura', 'Oyón', 'Yauyos'],
-  'Arequipa': ['Arequipa', 'Camaná', 'Caravelí', 'Castilla', 'Caylloma', 'Condesuyos', 'Islay', 'La Unión'],
-  'Cusco': ['Cusco', 'Acomayo', 'Anta', 'Calca', 'Canas', 'Canchis', 'Chumbivilcas', 'Espinar', 'La Convención', 'Paruro', 'Paucartambo', 'Quispicanchi', 'Urubamba'],
-  // Agregar más según necesites
-};
-
-const DISTRITOS_POR_PROVINCIA: Record<string, string[]> = {
-  'Lima': ['Cercado de Lima', 'Miraflores', 'San Isidro', 'Surco', 'La Molina', 'San Borja', 'Surquillo', 'Barranco', 'Chorrillos', 'San Juan de Miraflores', 'Villa María del Triunfo', 'Villa El Salvador', 'Ate', 'Santa Anita', 'El Agustino', 'San Luis', 'La Victoria', 'Lince', 'Jesús María', 'Pueblo Libre', 'Magdalena', 'San Miguel', 'Breña', 'Rímac', 'Los Olivos', 'Independencia', 'San Martín de Porres', 'Comas', 'Carabayllo', 'Puente Piedra', 'Ancón', 'Santa Rosa', 'Pachacámac', 'Lurín', 'Punta Hermosa', 'Punta Negra', 'San Bartolo', 'Santa María del Mar', 'Pucusana', 'Chaclacayo', 'Lurigancho', 'Cieneguilla'],
-  'Arequipa': ['Arequipa', 'Alto Selva Alegre', 'Cayma', 'Cerro Colorado', 'Characato', 'Chiguata', 'Jacobo Hunter', 'José Luis Bustamante y Rivero', 'Mariano Melgar', 'Miraflores', 'Mollebaya', 'Paucarpata', 'Pocsi', 'Polobaya', 'Quequeña', 'Sabandía', 'Sachaca', 'San Juan de Siguas', 'San Juan de Tarucani', 'Santa Isabel de Siguas', 'Santa Rita de Siguas', 'Socabaya', 'Tiabaya', 'Uchumayo', 'Vitor', 'Yanahuara', 'Yarabamba', 'Yura'],
-  'Cusco': ['Cusco', 'Ccorca', 'Poroy', 'San Jerónimo', 'San Sebastián', 'Santiago', 'Saylla', 'Wanchaq'],
-  // Agregar más según necesites
-};
-
+import { DEPARTAMENTOS, DISTRITOS_POR_PROVINCIA, PROVINCIAS_POR_DEPARTAMENTO } from './ubigeo-peru';
 // Componente Dropdown con Picker
 interface DropdownProps {
   label: string;
@@ -70,7 +47,10 @@ export default function OnboardingScreen3() {
 
   // Obtener opciones dinámicas según la selección
   const provinciasDisponibles = departamento ? (PROVINCIAS_POR_DEPARTAMENTO[departamento] || []) : [];
-  const distritosDisponibles = provincia ? (DISTRITOS_POR_PROVINCIA[provincia] || []) : [];
+// CÓDIGO CORREGIDO
+  const distritosDisponibles = (departamento && provincia) 
+    ? (DISTRITOS_POR_PROVINCIA[departamento]?.[provincia] || []) 
+    : [];
 
   // Resetear provincia y distrito cuando cambia el departamento
   const handleDepartamentoChange = (value: string) => {

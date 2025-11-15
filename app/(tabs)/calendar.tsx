@@ -1,6 +1,6 @@
 import { AlertCircle, Calendar, CheckCircle2, Clock } from 'lucide-react-native';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 // Datos de ejemplo del calendario electoral
 const eventos = [
@@ -56,7 +56,7 @@ export default function CalendarScreen() {
       case 'proximo':
         return <AlertCircle size={20} color="#D97706" />;
       case 'importante':
-        return <Calendar size={20} color="#B91C1C" />;
+        return <Calendar size={20} color="#8B1538" />;
       default:
         return <Clock size={20} color="#6B7280" />;
     }
@@ -81,7 +81,7 @@ export default function CalendarScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.iconHeader}>
-            <Calendar size={28} color="#B91C1C" />
+            <Calendar size={28} color="#8B1538" />
           </View>
           <Text style={styles.headerTitle}>Calendario Electoral</Text>
           <Text style={styles.headerSubtitle}>Elecciones Generales 2026</Text>
@@ -89,9 +89,9 @@ export default function CalendarScreen() {
 
         {/* Franja peruana */}
         <View style={styles.banderaStripe}>
-          <View style={[styles.stripeSection, { backgroundColor: '#B91C1C' }]} />
+          <View style={[styles.stripeSection, { backgroundColor: '#8B1538' }]} />
           <View style={[styles.stripeSection, { backgroundColor: '#FFFFFF' }]} />
-          <View style={[styles.stripeSection, { backgroundColor: '#B91C1C' }]} />
+          <View style={[styles.stripeSection, { backgroundColor: '#8B1538' }]} />
         </View>
 
         {/* Contador de días */}
@@ -139,7 +139,7 @@ export default function CalendarScreen() {
           </View>
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
-              <Calendar size={16} color="#B91C1C" />
+              <Calendar size={16} color="#8B1538" />
               <Text style={styles.legendText}>Día Electoral</Text>
             </View>
             <View style={styles.legendItem}>
@@ -163,6 +163,17 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 20,
     alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   iconHeader: {
     width: 64,
@@ -195,12 +206,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   countdownCard: {
-    backgroundColor: '#B91C1C',
+    backgroundColor: '#8B1538',
     margin: 24,
     marginTop: 20,
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B1538',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   countdownNumber: {
     fontSize: 48,
@@ -250,6 +272,17 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   eventDate: {
     fontSize: 13,
@@ -276,6 +309,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   legendTitle: {
     fontSize: 14,

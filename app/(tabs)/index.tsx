@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Bell, Calendar, FileText, Globe, GraduationCap, Users, Vote } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type RolUsuario = 'info' | 'elector' | 'mesa' | 'ambos';
 
@@ -67,7 +67,7 @@ export default function HomeScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#B91C1C" />
+          <ActivityIndicator size="large" color="#8B1538" />
           <Text style={styles.loadingText}>Cargando...</Text>
         </View>
       </SafeAreaView>
@@ -95,15 +95,15 @@ export default function HomeScreen() {
 
         {/* Franja peruana */}
         <View style={styles.banderaStripe}>
-          <View style={[styles.stripeSection, { backgroundColor: '#B91C1C' }]} />
+          <View style={[styles.stripeSection, { backgroundColor: '#8B1538' }]} />
           <View style={[styles.stripeSection, { backgroundColor: '#FFFFFF' }]} />
-          <View style={[styles.stripeSection, { backgroundColor: '#B91C1C' }]} />
+          <View style={[styles.stripeSection, { backgroundColor: '#8B1538' }]} />
         </View>
 
         {/* Información destacada */}
         <View style={styles.highlightCard}>
           <View style={styles.highlightHeader}>
-            <Vote size={28} color="#B91C1C" />
+            <Vote size={28} color="#8B1538" />
             <Text style={styles.highlightTitle}>Elecciones 2026</Text>
           </View>
           <Text style={styles.highlightText}>
@@ -119,33 +119,49 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Accesos Rápidos</Text>
           
           <View style={styles.quickAccessGrid}>
-            <TouchableOpacity style={styles.quickAccessCard}>
+            <TouchableOpacity 
+              style={styles.quickAccessCard}
+              onPress={() => router.push('/(tabs)/voting')}
+              activeOpacity={0.7}
+            >
               <View style={styles.quickAccessIcon}>
-                <Vote size={24} color="#B91C1C" />
+                <Vote size={24} color="#8B1538" />
               </View>
               <Text style={styles.quickAccessTitle}>Mi Local</Text>
               <Text style={styles.quickAccessSubtitle}>de Votación</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickAccessCard}>
+            <TouchableOpacity 
+              style={styles.quickAccessCard}
+              onPress={() => router.push('/(tabs)/parties')}
+              activeOpacity={0.7}
+            >
               <View style={styles.quickAccessIcon}>
-                <FileText size={24} color="#B91C1C" />
+                <FileText size={24} color="#8B1538" />
               </View>
               <Text style={styles.quickAccessTitle}>Propuestas</Text>
               <Text style={styles.quickAccessSubtitle}>de Partidos</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickAccessCard}>
+            <TouchableOpacity 
+              style={styles.quickAccessCard}
+              onPress={() => router.push('/(tabs)/myrole')}
+              activeOpacity={0.7}
+            >
               <View style={styles.quickAccessIcon}>
-                <Users size={24} color="#B91C1C" />
+                <Users size={24} color="#8B1538" />
               </View>
-              <Text style={styles.quickAccessTitle}>Miembro</Text>
-              <Text style={styles.quickAccessSubtitle}>de Mesa</Text>
+              <Text style={styles.quickAccessTitle}>Mi Rol</Text>
+              <Text style={styles.quickAccessSubtitle}>en Elecciones</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickAccessCard}>
+            <TouchableOpacity 
+              style={styles.quickAccessCard}
+              onPress={() => router.push('/(tabs)/calendar')}
+              activeOpacity={0.7}
+            >
               <View style={styles.quickAccessIcon}>
-                <Calendar size={24} color="#B91C1C" />
+                <Calendar size={24} color="#8B1538" />
               </View>
               <Text style={styles.quickAccessTitle}>Calendario</Text>
               <Text style={styles.quickAccessSubtitle}>Electoral</Text>
@@ -160,34 +176,28 @@ export default function HomeScreen() {
           <View style={styles.shortcutsRow}>
             <TouchableOpacity 
               style={styles.shortcutButton}
-              onPress={() => {
-                // TODO: Abrir tab "Partidos" cuando se cree
-                console.log('Abrir tab Partidos');
-              }}
+              onPress={() => router.push('/(tabs)/parties')}
+              activeOpacity={0.7}
             >
-              <FileText size={20} color="#B91C1C" />
+              <FileText size={20} color="#8B1538" />
               <Text style={styles.shortcutText}>Partidos y propuestas</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.shortcutButton}
-              onPress={() => {
-                // TODO: Abrir modal o sección "Fuentes oficiales"
-                console.log('Abrir Fuentes oficiales');
-              }}
+              onPress={() => router.push('/(tabs)/myrole')}
+              activeOpacity={0.7}
             >
-              <Globe size={20} color="#B91C1C" />
+              <Globe size={20} color="#8B1538" />
               <Text style={styles.shortcutText}>Fuentes oficiales</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.shortcutButton}
-              onPress={() => {
-                // TODO: Abrir carrusel/slides de tutorial
-                console.log('Abrir Tutorial');
-              }}
+              onPress={() => router.push('/(tabs)/myrole')}
+              activeOpacity={0.7}
             >
-              <GraduationCap size={20} color="#B91C1C" />
+              <GraduationCap size={20} color="#8B1538" />
               <Text style={styles.shortcutText}>Tutorial de la app</Text>
             </TouchableOpacity>
           </View>
@@ -233,6 +243,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 16,
     backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   greeting: {
     fontSize: 24,
@@ -271,6 +292,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#FECACA',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B1538',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   highlightHeader: {
     flexDirection: 'row',
@@ -325,6 +357,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   quickAccessIcon: {
     width: 56,
@@ -334,6 +377,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B1538',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   quickAccessTitle: {
     fontSize: 15,
@@ -353,9 +407,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   newsBadge: {
-    backgroundColor: '#B91C1C',
+    backgroundColor: '#8B1538',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -396,7 +461,7 @@ const styles = StyleSheet.create({
   },
   // Estilos para badge
   badge: {
-    backgroundColor: '#B91C1C',
+    backgroundColor: '#8B1538',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
@@ -416,6 +481,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -436,11 +512,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   cardButton: {
-    backgroundColor: '#B91C1C',
+    backgroundColor: '#8B1538',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B1538',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   cardButtonText: {
     color: '#FFFFFF',
@@ -461,6 +548,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   shortcutText: {
     fontSize: 12,
