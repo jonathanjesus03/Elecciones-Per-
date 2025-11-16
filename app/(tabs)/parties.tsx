@@ -1,836 +1,405 @@
-import { 
-  ExternalLink, 
-  FileText, 
-  Search, 
-  Users, 
-  MapPin, 
-  Globe, 
-  Newspaper, 
-  UserCheck, 
-  Award, 
-  BarChart3, 
-  Shield,
+import axios from "axios";
+import {
   Building,
+  ExternalLink,
+  FileText,
+  Search,
+  Shield,
+  Users as UsersIcon,
   Vote,
-  Scale,
-  BookOpen,
-  Heart,
-  Briefcase,
-  GraduationCap,
-  TreePine,
-  Wifi,
-  Car,
-  ShieldCheck
-} from 'lucide-react-native';
-import React, { useState } from 'react';
-import { 
-  Linking, 
-  Platform, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  useWindowDimensions 
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "lucide-react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Linking,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-interface Partido {
+// 👉 Si ya tienes una instancia de axios (api.ts), usa esa en lugar de esto.
+const api = axios.create({
+  baseURL: "https://elecciones-backend-59y8.onrender.com/api",
+});
+
+// ==== Tipos según tu backend ====
+
+type CandidateRole =
+  | "PRESIDENT"
+  | "VICE_PRESIDENT"
+  | "CONGRESS"
+  | "SENATOR"
+  | "PARLAMENTO_ANDINO";
+
+type ProposalTopic = "ECONOMY" | "EDUCATION" | "HEALTH" | "SECURITY" | "OTHER";
+
+interface Candidate {
   id: number;
-  nombre: string;
-  acronimo: string;
-  candidato: string;
-  vicepresidente: string;
-  color: string;
-  propuestas: string[];
-  planGobierno: string;
-  fundacion: number;
-  ideologia: string[];
+  fullName: string;
+  role: CandidateRole;
+  regionLevel: "NATIONAL" | "REGIONAL";
+  bio: string;
+  cvUrl?: string | null;
+  partyId: number;
 }
 
-interface Candidato {
+interface Proposal {
   id: number;
-  nombre: string;
-  partido: string;
-  cargo: string;
-  region?: string;
-  experiencia: string[];
-  educacion: string[];
-  propuestas: string[];
-  hojaVida: string;
-  edad: number;
-  profesion: string;
+  title: string;
+  description: string;
+  topic: ProposalTopic;
+  partyId: number;
 }
 
-interface Noticia {
+interface Party {
   id: number;
-  titulo: string;
-  resumen: string;
-  fecha: string;
-  fuente: string;
-  url: string;
-  categoria: string;
-  imagen?: string;
+  name: string;
+  description: string;
+  logoUrl?: string | null;
+  website?: string | null;
+
+  // Solo estarán presentes cuando llamamos /parties/:id
+  candidates?: Candidate[];
+  proposals?: Proposal[];
 }
 
-const PARTIDOS_DATA: Partido[] = [
-  {
-    id: 1,
-    nombre: 'Partido Nacional del Progreso',
-    acronimo: 'PNP',
-    candidato: 'María Elena Torres',
-    vicepresidente: 'Roberto Silva Méndez',
-    color: '#DC2626',
-    propuestas: [
-      'Educación gratuita y de calidad para todos',
-      'Reforma del sistema de salud pública',
-      'Creación de 500,000 empleos formales',
-      'Lucha contra la corrupción institucional',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-pnp',
-    fundacion: 1995,
-    ideologia: ['Progresismo', 'Socialdemocracia']
-  },
-  {
-    id: 2,
-    nombre: 'Alianza Democrática Peruana',
-    acronimo: 'ADP',
-    candidato: 'Carlos Mendoza Vargas',
-    vicepresidente: 'Lucía Fernández Rojas',
-    color: '#2563EB',
-    propuestas: [
-      'Modernización de la infraestructura vial',
-      'Impulso a la agricultura sostenible',
-      'Digitalización del Estado',
-      'Seguridad ciudadana y reforma policial',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-adp',
-    fundacion: 2005,
-    ideologia: ['Liberalismo', 'Conservadurismo']
-  },
-  {
-    id: 3,
-    nombre: 'Frente Popular Unido',
-    acronimo: 'FPU',
-    candidato: 'Ana Lucía Paredes',
-    vicepresidente: 'Javier Rojas Quiroga',
-    color: '#059669',
-    propuestas: [
-      'Protección del medio ambiente',
-      'Inclusión social y reducción de la pobreza',
-      'Fortalecimiento de los gobiernos locales',
-      'Promoción de la cultura peruana',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-fpu',
-    fundacion: 1988,
-    ideologia: ['Ecologismo', 'Socialismo democrático']
-  },
-  {
-    id: 4,
-    nombre: 'Movimiento Renovación Nacional',
-    acronimo: 'MRN',
-    candidato: 'Jorge Luis Ramírez',
-    vicepresidente: 'Sofia Mendoza Castro',
-    color: '#7C3AED',
-    propuestas: [
-      'Inversión en ciencia y tecnología',
-      'Apoyo a las pequeñas empresas',
-      'Mejora de la calidad educativa',
-      'Transparencia y rendición de cuentas',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-mrn',
-    fundacion: 2010,
-    ideologia: ['Tecnocrático', 'Progresista']
-  },
-  {
-    id: 5,
-    nombre: 'Partido del Pueblo Peruano',
-    acronimo: 'PPP',
-    candidato: 'Rosa María Gonzáles',
-    vicepresidente: 'Miguel Torres Herrera',
-    color: '#EA580C',
-    propuestas: [
-      'Vivienda digna para todos los peruanos',
-      'Acceso universal al agua potable',
-      'Desarrollo de energías renovables',
-      'Protección de los derechos laborales',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-ppp',
-    fundacion: 1975,
-    ideologia: ['Populismo', 'Nacionalismo']
-  },
-  {
-    id: 6,
-    nombre: 'Coalición por el Cambio',
-    acronimo: 'CPC',
-    candidato: 'Miguel Ángel Soto',
-    vicepresidente: 'Carmen Rosa Velasco',
-    color: '#0891B2',
-    propuestas: [
-      'Reforma del sistema judicial',
-      'Descentralización efectiva',
-      'Fomento del turismo nacional',
-      'Conectividad digital en zonas rurales',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-cpc',
-    fundacion: 2015,
-    ideologia: ['Liberal', 'Reformista']
-  },
-  {
-    id: 7,
-    nombre: 'Unión Patriótica Peruana',
-    acronimo: 'UPP',
-    candidato: 'Ricardo Benavides Llosa',
-    vicepresidente: 'Patricia Delgado Ruiz',
-    color: '#CA8A04',
-    propuestas: [
-      'Fortalecimiento de las Fuerzas Armadas',
-      'Protección de la soberanía nacional',
-      'Inversión en defensa nacional',
-      'Promoción de valores patrióticos',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-upp',
-    fundacion: 2000,
-    ideologia: ['Patriotismo', 'Conservadurismo']
-  },
-  {
-    id: 8,
-    nombre: 'Fuerza Verde Ecológica',
-    acronimo: 'FVE',
-    candidato: 'Laura Cristina Moscoso',
-    vicepresidente: 'Daniel Vega Maldonado',
-    color: '#16A34A',
-    propuestas: [
-      'Transición energética 100% renovable',
-      'Protección de áreas naturales',
-      'Agricultura orgánica nacional',
-      'Impulso al ecoturismo',
-    ],
-    planGobierno: 'https://ejemplo.pe/plan-fve',
-    fundacion: 2012,
-    ideologia: ['Ecologismo', 'Sostenibilidad']
-  }
-];
+// Map para traducir enum a texto amigable
+const ROLE_LABELS: Record<CandidateRole, string> = {
+  PRESIDENT: "Candidato(a) a la Presidencia",
+  VICE_PRESIDENT: "Candidato(a) a la Vicepresidencia",
+  CONGRESS: "Candidato(a) al Congreso",
+  SENATOR: "Candidato(a) al Senado",
+  PARLAMENTO_ANDINO: "Candidato(a) al Parlamento Andino",
+};
 
-const CANDIDATOS_DATA: Candidato[] = [
-  {
-    id: 1,
-    nombre: 'María Elena Torres',
-    partido: 'PNP',
-    cargo: 'Presidencia',
-    experiencia: [
-      'Ex Ministra de Educación (2018-2020)',
-      'Rectora de la Universidad Nacional Mayor de San Marcos',
-      '15 años en servicio público',
-      'Autora de 5 libros sobre política educativa'
-    ],
-    educacion: [
-      'Doctorado en Ciencias Políticas - Universidad de Harvard',
-      'Maestría en Administración Pública - London School of Economics',
-      'Bachiller en Derecho - PUCP'
-    ],
-    propuestas: ['Reforma educativa integral', 'Fortalecimiento de la salud pública'],
-    hojaVida: 'https://ejemplo.pe/cv-torres',
-    edad: 52,
-    profesion: 'Educadora y Politóloga'
-  },
-  {
-    id: 2,
-    nombre: 'Carlos Mendoza Vargas',
-    partido: 'ADP',
-    cargo: 'Presidencia',
-    experiencia: [
-      'Ex Alcalde de Lima Metropolitana',
-      'Empresario del sector construcción',
-      '10 años en gestión pública',
-      'Presidente de la Cámara de Comercio de Lima'
-    ],
-    educacion: [
-      'Ingeniero Civil - Universidad Nacional de Ingeniería',
-      'MBA en Gestión Pública - ESAN',
-      'Especialización en Infraestructura - MIT'
-    ],
-    propuestas: ['Infraestructura nacional', 'Modernización del estado'],
-    hojaVida: 'https://ejemplo.pe/cv-mendoza',
-    edad: 58,
-    profesion: 'Ingeniero Civil'
-  },
-  {
-    id: 3,
-    nombre: 'Ana Lucía Paredes',
-    partido: 'FPU',
-    cargo: 'Presidencia',
-    experiencia: [
-      'Líder ambiental y defensora de derechos humanos',
-      'Ex Congresista de la República',
-      'Fundadora de ONG "Tierra Viva"',
-      'Consultora internacional en desarrollo sostenible'
-    ],
-    educacion: [
-      'Maestría en Desarrollo Sostenible - Universidad de Cambridge',
-      'Sociología - Universidad Nacional Mayor de San Marcos',
-      'Especialización en Derechos Humanos - ONU'
-    ],
-    propuestas: ['Transición ecológica', 'Economía circular'],
-    hojaVida: 'https://ejemplo.pe/cv-paredes',
-    edad: 45,
-    profesion: 'Socióloga Ambiental'
-  },
-  {
-    id: 4,
-    nombre: 'Jorge Luis Ramírez',
-    partido: 'MRN',
-    cargo: 'Presidencia',
-    experiencia: [
-      'Ex Ministro de Ciencia y Tecnología',
-      'CEO de Startup Tecnológica exitosa',
-      'Investigador en inteligencia artificial',
-      'Asesor de innovación en CAF'
-    ],
-    educacion: [
-      'PhD en Ciencias de la Computación - Stanford University',
-      'Maestría en Inteligencia Artificial - MIT',
-      'Ingeniería de Sistemas - UTEC'
-    ],
-    propuestas: ['Revolución digital', 'Gobierno 4.0'],
-    hojaVida: 'https://ejemplo.pe/cv-ramirez',
-    edad: 39,
-    profesion: 'Científico de Datos'
-  },
-  {
-    id: 5,
-    nombre: 'Roberto Silva Méndez',
-    partido: 'PNP',
-    cargo: 'Vicepresidencia',
-    experiencia: [
-      'Ex Viceministro de Economía',
-      'Economista Jefe del BCRP',
-      'Profesor Universitario',
-      'Consultor del FMI'
-    ],
-    educacion: [
-      'Doctorado en Economía - Universidad de Chicago',
-      'Maestría en Economía - London School of Economics',
-      'Economía - Universidad del Pacífico'
-    ],
-    propuestas: ['Estabilidad macroeconómica', 'Inversión pública eficiente'],
-    hojaVida: 'https://ejemplo.pe/cv-silva',
-    edad: 55,
-    profesion: 'Economista'
-  },
-  {
-    id: 6,
-    nombre: 'Lucía Fernández Rojas',
-    partido: 'ADP',
-    cargo: 'Vicepresidencia',
-    experiencia: [
-      'Ex Ministra de Relaciones Exteriores',
-      'Embajadora en Estados Unidos',
-      'Catedrática de Derecho Internacional',
-      'Negociadora de tratados comerciales'
-    ],
-    educacion: [
-      'Doctorado en Derecho Internacional - Georgetown University',
-      'Maestría en Relaciones Internacionales - Sciences Po',
-      'Derecho - PUCP'
-    ],
-    propuestas: ['Inserción internacional', 'Diplomacia comercial'],
-    hojaVida: 'https://ejemplo.pe/cv-fernandez',
-    edad: 49,
-    profesion: 'Internationalista'
-  }
-];
+const TOPIC_LABELS: Record<ProposalTopic, string> = {
+  ECONOMY: "Economía y empleo",
+  EDUCATION: "Educación",
+  HEALTH: "Salud",
+  SECURITY: "Seguridad ciudadana",
+  OTHER: "Otros temas",
+};
 
-const NOTICIAS_DATA: Noticia[] = [
-  {
-    id: 1,
-    titulo: 'Debate presidencial: candidatos presentan sus propuestas económicas',
-    resumen: 'Los ocho candidatos presidenciales debatieron durante tres horas sobre medidas para reactivar la economía, combatir la inflación y generar empleo en el primer debate organizado por el JNE.',
-    fecha: '2024-03-15',
-    fuente: 'Diario El Comercio',
-    url: 'https://ejemplo.pe/noticia1',
-    categoria: 'Debates'
-  },
-  {
-    id: 2,
-    titulo: 'JNE presenta plataforma digital para consulta de hojas de vida',
-    resumen: 'El Jurado Nacional de Elecciones implementó nuevo sistema tecnológico que permite verificar en tiempo real la información académica y profesional de todos los candidatos a cargos de elección popular.',
-    fecha: '2024-03-14',
-    fuente: 'Andina Noticias',
-    url: 'https://ejemplo.pe/noticia2',
-    categoria: 'Institucional'
-  },
-  {
-    id: 3,
-    titulo: 'ONPE anuncia cronograma oficial de elecciones generales 2024',
-    resumen: 'La Oficina Nacional de Procesos Electorales detalló las fechas clave para las votaciones, conteo de votos y publicación de resultados oficiales del proceso electoral.',
-    fecha: '2024-03-12',
-    fuente: 'Gestión',
-    url: 'https://ejemplo.pe/noticia3',
-    categoria: 'Proceso Electoral'
-  }
-];
+// ================== Componente principal ==================
 
-const SECTORES_DATA = [
-  { 
-    icon: <Heart size={24} color="#FFFFFF" />, 
-    nombre: 'Salud', 
-    color: '#DC2626',
-    propuestas: [
-      'Universalización del Seguro Integral de Salud',
-      'Construcción de 100 nuevos centros de salud',
-      'Programa nacional de prevención de enfermedades',
-      'Digitalización de historias clínicas'
-    ]
-  },
-  { 
-    icon: <GraduationCap size={24} color="#FFFFFF" />, 
-    nombre: 'Educación', 
-    color: '#2563EB',
-    propuestas: [
-      'Implementación de educación digital en todas las escuelas',
-      'Capacitación docente continua',
-      'Becas integrales para educación superior',
-      'Infraestructura educativa moderna'
-    ]
-  },
-  { 
-    icon: <Briefcase size={24} color="#FFFFFF" />, 
-    nombre: 'Economía', 
-    color: '#059669',
-    propuestas: [
-      'Reactívate Perú: programa de reactivación económica',
-      'Apoyo a MIPYMES y emprendedores',
-      'Atracción de inversión extranjera',
-      'Simplificación tributaria'
-    ]
-  },
-  { 
-    icon: <ShieldCheck size={24} color="#FFFFFF" />, 
-    nombre: 'Seguridad', 
-    color: '#7C3AED',
-    propuestas: [
-      'Modernización de la Policía Nacional',
-      'Sistema integrado de emergencias',
-      'Prevención del delito comunitario',
-      'Reforma del sistema penitenciario'
-    ]
-  },
-  { 
-    icon: <TreePine size={24} color="#FFFFFF" />, 
-    nombre: 'Medio Ambiente', 
-    color: '#16A34A',
-    propuestas: [
-      'Transición a energías renovables',
-      'Protección de bosques primarios',
-      'Manejo sostenible de recursos hídricos',
-      'Economía circular nacional'
-    ]
-  },
-  { 
-    icon: <Car size={24} color="#FFFFFF" />, 
-    nombre: 'Infraestructura', 
-    color: '#EA580C',
-    propuestas: [
-      'Red nacional de carreteras interconectadas',
-      'Modernización de puertos y aeropuertos',
-      'Vivienda social sostenible',
-      'Agua y saneamiento para todos'
-    ]
-  },
-  { 
-    icon: <Wifi size={24} color="#FFFFFF" />, 
-    nombre: 'Tecnología', 
-    color: '#0891B2',
-    propuestas: [
-      'Conectividad digital nacional',
-      'Gobierno electrónico integral',
-      'Impulso a la industria tech',
-      'Ciberseguridad nacional'
-    ]
-  },
-  { 
-    icon: <Scale size={24} color="#FFFFFF" />, 
-    nombre: 'Justicia', 
-    color: '#CA8A04',
-    propuestas: [
-      'Reforma del sistema judicial',
-      'Lucha contra la corrupción',
-      'Acceso a justicia gratuita',
-      'Modernización de procesos judiciales'
-    ]
-  }
-];
-
-export default function ElectoralApp() {
-  const [activeSection, setActiveSection] = useState('partidos');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSector, setSelectedSector] = useState<string | null>(null);
+export default function PartiesScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const isDesktop = width >= 1024;
 
-  const openURL = (url: string) => {
-    Linking.openURL(url).catch((err) => console.error('Error opening URL:', err));
+  const [searchQuery, setSearchQuery] = useState("");
+  const [parties, setParties] = useState<Party[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [expandedPartyId, setExpandedPartyId] = useState<number | null>(null);
+  const [partyDetails, setPartyDetails] = useState<Record<number, Party>>({});
+  const [loadingPartyId, setLoadingPartyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadParties();
+  }, []);
+
+  const loadParties = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.get<Party[]>("/parties");
+      setParties(res.data);
+    } catch (e) {
+      console.error(e);
+      setError("No se pudo cargar la información de los partidos.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const renderPartidos = () => (
-    <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <Building size={24} color="#8B1538" />
-          <Text style={styles.sectionTitle}>
-            {PARTIDOS_DATA.length} Partidos Políticos Registrados
-          </Text>
-        </View>
-        <Text style={styles.sectionSubtitle}>
-          Conoce las propuestas y planes de gobierno de cada organización política
-        </Text>
-      </View>
+  const handleOpenWebsite = (url?: string | null) => {
+    if (!url) return;
+    Linking.openURL(url).catch((err) =>
+      console.error("Error al abrir la web:", err)
+    );
+  };
 
-      <View style={[styles.grid, isTablet && styles.gridTablet]}>
-        {PARTIDOS_DATA.map((partido) => (
-          <View key={partido.id} style={[styles.partidoCard, isTablet && styles.partidoCardTablet]}>
-            <View style={styles.partidoHeader}>
-              <View style={[styles.partidoLogo, { backgroundColor: partido.color }]}>
-                <Text style={styles.partidoAcronimo}>{partido.acronimo}</Text>
+  const handleToggleParty = async (partyId: number) => {
+    if (expandedPartyId === partyId) {
+      setExpandedPartyId(null);
+      return;
+    }
+
+    setExpandedPartyId(partyId);
+
+    // Si ya tenemos detalle, no volvemos a llamar
+    if (partyDetails[partyId]) return;
+
+    try {
+      setLoadingPartyId(partyId);
+      const res = await api.get<Party>(`/parties/${partyId}`);
+      setPartyDetails((prev) => ({ ...prev, [partyId]: res.data }));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingPartyId(null);
+    }
+  };
+
+  const filteredParties = useMemo(() => {
+    if (!searchQuery.trim()) return parties;
+    const q = searchQuery.toLowerCase();
+    return parties.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description ?? "").toLowerCase().includes(q)
+    );
+  }, [searchQuery, parties]);
+
+  const renderPartyCard = (party: Party) => {
+    const isExpanded = expandedPartyId === party.id;
+    const detail = partyDetails[party.id];
+
+    // separo candidatos principales
+    const president = detail?.candidates?.find((c) => c.role === "PRESIDENT");
+    const vice = detail?.candidates?.find((c) => c.role === "VICE_PRESIDENT");
+    const otherCandidates =
+      detail?.candidates?.filter(
+        (c) => c.role !== "PRESIDENT" && c.role !== "VICE_PRESIDENT"
+      ) ?? [];
+
+    // agrupo propuestas por tema
+    const proposalsByTopic = (detail?.proposals ?? []).reduce<
+      Record<ProposalTopic, Proposal[]>
+    >((acc, p) => {
+      if (!acc[p.topic]) acc[p.topic] = [];
+      acc[p.topic].push(p);
+      return acc;
+    }, {} as any);
+
+    return (
+      <View
+        key={party.id}
+        style={[styles.partidoCard, isTablet && styles.partidoCardTablet]}
+      >
+        {/* Header partido */}
+        <TouchableOpacity
+          onPress={() => handleToggleParty(party.id)}
+          activeOpacity={0.9}
+        >
+          <View style={styles.partidoHeader}>
+          <View style={[styles.partidoLogo, { backgroundColor: "#8B1538" }]}>
+  {party.logoUrl ? (
+    <Image
+      source={{ uri: party.logoUrl }}
+      style={styles.partidoLogoImage}
+      resizeMode="contain"
+    />
+  ) : (
+    <Text style={styles.partidoAcronimo}>
+      {party.name.substring(0, 3).toUpperCase()}
+    </Text>
+  )}
+</View>
+            <View style={styles.partidoInfo}>
+              <Text style={styles.partidoNombre}>{party.name}</Text>
+              <Text style={styles.partidoFundacion} numberOfLines={2}>
+                {party.description}
+              </Text>
+              {party.website && (
+                <TouchableOpacity
+                  style={styles.webChip}
+                  onPress={() => handleOpenWebsite(party.website)}
+                >
+                  <ExternalLink size={14} color="#8B1538" />
+                  <Text style={styles.webChipText}>Sitio oficial</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Estado de carga de detalle */}
+        {loadingPartyId === party.id && (
+          <View style={styles.loadingDetail}>
+            <ActivityIndicator size="small" color="#8B1538" />
+            <Text style={styles.loadingDetailText}>
+              Cargando información del partido...
+            </Text>
+          </View>
+        )}
+
+        {/* Detalle expandido */}
+        {isExpanded && detail && (
+          <View style={styles.detailContainer}>
+            {/* Planchas presidenciales */}
+            <View style={styles.detailSection}>
+              <View style={styles.detailSectionHeader}>
+                <UsersIcon size={18} color="#8B1538" />
+                <Text style={styles.detailSectionTitle}>
+                  Planchas Presidenciales
+                </Text>
               </View>
-              <View style={styles.partidoInfo}>
-                <Text style={styles.partidoNombre}>{partido.nombre}</Text>
-                <Text style={styles.partidoFundacion}>Fundado en {partido.fundacion}</Text>
-                <View style={styles.ideologiaContainer}>
-                  {partido.ideologia.map((ideologia, index) => (
-                    <View key={index} style={styles.ideologiaChip}>
-                      <Text style={styles.ideologiaText}>{ideologia}</Text>
+              {president || vice ? (
+                <View style={styles.formulaContainer}>
+                  {president && (
+                    <View style={styles.personItem}>
+                      <Text style={styles.personName}>
+                        {president.fullName}
+                      </Text>
+                      <Text style={styles.personRole}>
+                        {ROLE_LABELS[president.role]}
+                      </Text>
+                    </View>
+                  )}
+                  {vice && (
+                    <View style={styles.personItem}>
+                      <Text style={styles.personName}>{vice.fullName}</Text>
+                      <Text style={styles.personRole}>
+                        {ROLE_LABELS[vice.role]}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>
+                  Aún no se registran candidaturas presidenciales para este
+                  partido.
+                </Text>
+              )}
+            </View>
+
+            {/* Otros candidatos */}
+            {otherCandidates.length > 0 && (
+              <View style={styles.detailSection}>
+                <View style={styles.detailSectionHeader}>
+                  <UsersIcon size={18} color="#8B1538" />
+                  <Text style={styles.detailSectionTitle}>
+                    Otros candidatos
+                  </Text>
+                </View>
+                {otherCandidates.slice(0, 4).map((c) => (
+                  <View key={c.id} style={styles.personRow}>
+                    <View style={styles.personDot} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.personName}>{c.fullName}</Text>
+                      <Text style={styles.personMeta}>
+                        {ROLE_LABELS[c.role]} ·{" "}
+                        {c.regionLevel === "NATIONAL"
+                          ? "Ámbito nacional"
+                          : "Ámbito regional"}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Propuestas por tema */}
+            <View style={styles.detailSection}>
+              <View style={styles.detailSectionHeader}>
+                <FileText size={18} color="#8B1538" />
+                <Text style={styles.detailSectionTitle}>
+                  Propuestas principales
+                </Text>
+              </View>
+
+              {Object.keys(proposalsByTopic).length === 0 && (
+                <Text style={styles.emptyText}>
+                  Este partido aún no tiene propuestas registradas en la
+                  plataforma.
+                </Text>
+              )}
+
+              {Object.entries(proposalsByTopic).map(([topic, list]) => (
+                <View key={topic} style={styles.topicBlock}>
+                  <Text style={styles.topicTitle}>
+                    {TOPIC_LABELS[topic as ProposalTopic]}
+                  </Text>
+                  {list.slice(0, 3).map((p) => (
+                    <View key={p.id} style={styles.propuestaItem}>
+                      <View style={styles.propuestaBullet} />
+                      <Text style={styles.propuestaText}>
+                        <Text style={{ fontWeight: "600" }}>{p.title}: </Text>
+                        {p.description}
+                      </Text>
                     </View>
                   ))}
                 </View>
-              </View>
-            </View>
-
-            <View style={styles.candidatosInfo}>
-              <View style={styles.candidatoItem}>
-                <UserCheck size={16} color="#6B7280" />
-                <Text style={styles.candidatoText}>{partido.candidato}</Text>
-              </View>
-              <View style={styles.candidatoItem}>
-                <Award size={16} color="#6B7280" />
-                <Text style={styles.candidatoText}>{partido.vicepresidente}</Text>
-              </View>
-            </View>
-
-            <View style={styles.propuestasSection}>
-              <Text style={styles.propuestasTitle}>Propuestas principales:</Text>
-              {partido.propuestas.slice(0, 3).map((propuesta, index) => (
-                <View key={index} style={styles.propuestaItem}>
-                  <View style={styles.propuestaBullet} />
-                  <Text style={styles.propuestaText}>{propuesta}</Text>
-                </View>
               ))}
             </View>
-
-            <TouchableOpacity
-              style={styles.planButton}
-              onPress={() => openURL(partido.planGobierno)}
-            >
-              <FileText size={18} color="#FFFFFF" />
-              <Text style={styles.planButtonText}>Ver plan de gobierno completo</Text>
-              <ExternalLink size={16} color="#FFFFFF" />
-            </TouchableOpacity>
           </View>
-        ))}
+        )}
       </View>
-    </View>
-  );
+    );
+  };
 
-  const renderCandidatos = () => (
-    <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <Users size={24} color="#8B1538" />
-          <Text style={styles.sectionTitle}>Candidatos a Elecciones Generales 2024</Text>
-        </View>
-      </View>
+  // ================== RENDER ==================
 
-      <View style={styles.categoriaSection}>
-        <Text style={styles.categoriaTitle}>🏛️ Planchas Presidenciales</Text>
-        <View style={[styles.grid, isTablet && styles.gridTablet]}>
-          {CANDIDATOS_DATA.filter(c => c.cargo === 'Presidencia').map(candidato => (
-            <View key={candidato.id} style={[styles.candidatoCard, isTablet && styles.candidatoCardTablet]}>
-              <View style={styles.candidatoHeader}>
-                <View style={styles.candidatoFoto} />
-                <View style={styles.candidatoInfo}>
-                  <Text style={styles.candidatoNombre}>{candidato.nombre}</Text>
-                  <Text style={styles.candidatoPartido}>{candidato.partido}</Text>
-                  <Text style={styles.candidatoProfesion}>{candidato.profesion}</Text>
-                  <Text style={styles.candidatoEdad}>{candidato.edad} años</Text>
-                </View>
-              </View>
-              
-              <View style={styles.candidatoDetalles}>
-                <Text style={styles.detallesTitle}>Educación:</Text>
-                {candidato.educacion.slice(0, 2).map((edu, index) => (
-                  <Text key={index} style={styles.detalleItem}>• {edu}</Text>
-                ))}
-              </View>
-
-              <TouchableOpacity 
-                style={styles.hojaVidaButton}
-                onPress={() => openURL(candidato.hojaVida)}
-              >
-                <FileText size={16} color="#8B1538" />
-                <Text style={styles.hojaVidaText}>Ver hoja de vida completa</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.categoriaSection}>
-        <Text style={styles.categoriaTitle}>👥 Candidatos al Congreso</Text>
-        <View style={styles.comingSoonContainer}>
-          <Text style={styles.comingSoon}>Información detallada disponible próximamente</Text>
-          <Text style={styles.comingSoonSubtitle}>
-            El JNE publicará la lista completa de candidatos al Congreso en las próximas semanas
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#8B1538" />
+          <Text style={{ marginTop: 8, color: "#64748B" }}>
+            Cargando partidos políticos...
           </Text>
         </View>
-      </View>
-    </View>
-  );
-
-  const renderPlanesGobierno = () => (
-    <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <BookOpen size={24} color="#8B1538" />
-          <Text style={styles.sectionTitle}>Planes de Gobierno por Sectores</Text>
-        </View>
-        <Text style={styles.sectionSubtitle}>
-          Compara las propuestas de todos los partidos organizadas por áreas temáticas
-        </Text>
-      </View>
-
-      {selectedSector ? (
-        <View style={styles.sectorDetalle}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => setSelectedSector(null)}
-          >
-            <Text style={styles.backButtonText}>← Volver a sectores</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.sectorDetalleTitle}>
-            Propuestas para {selectedSector}
-          </Text>
-          
-          <View style={styles.propuestasComparadas}>
-            {PARTIDOS_DATA.map(partido => (
-              <View key={partido.id} style={styles.partidoPropuestas}>
-                <View style={styles.partidoHeader}>
-                  <View style={[styles.partidoLogoSmall, { backgroundColor: partido.color }]}>
-                    <Text style={styles.partidoAcronimoSmall}>{partido.acronimo}</Text>
-                  </View>
-                  <Text style={styles.partidoNombreSmall}>{partido.nombre}</Text>
-                </View>
-                <View style={styles.propuestasList}>
-                  {partido.propuestas.slice(0, 2).map((propuesta, index) => (
-                    <Text key={index} style={styles.propuestaComparada}>• {propuesta}</Text>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      ) : (
-        <View style={[styles.sectoresGrid, isTablet && styles.sectoresGridTablet]}>
-          {SECTORES_DATA.map((sector, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={[styles.sectorCard, isTablet && styles.sectorCardTablet]}
-              onPress={() => setSelectedSector(sector.nombre)}
-            >
-              <View style={[styles.sectorIcon, { backgroundColor: sector.color }]}>
-                {sector.icon}
-              </View>
-              <Text style={styles.sectorNombre}>{sector.nombre}</Text>
-              <Text style={styles.sectorDescripcion}>
-                {sector.propuestas.length} propuestas principales
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-
-  const renderNoticias = () => (
-    <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <Newspaper size={24} color="#8B1538" />
-          <Text style={styles.sectionTitle}>Últimas Noticias Electorales</Text>
-        </View>
-      </View>
-
-      <View style={[styles.grid, isTablet && styles.gridTablet]}>
-        {NOTICIAS_DATA.map((noticia) => (
-          <TouchableOpacity 
-            key={noticia.id} 
-            style={[styles.noticiaCard, isTablet && styles.noticiaCardTablet]}
-            onPress={() => openURL(noticia.url)}
-          >
-            <View style={styles.noticiaHeader}>
-              <View style={styles.noticiaCategoriaContainer}>
-                <Text style={styles.noticiaCategoria}>{noticia.categoria}</Text>
-              </View>
-              <Text style={styles.noticiaFecha}>{noticia.fecha}</Text>
-            </View>
-            <Text style={styles.noticiaTitulo}>{noticia.titulo}</Text>
-            <Text style={styles.noticiaResumen}>{noticia.resumen}</Text>
-            <View style={styles.noticiaFooter}>
-              <Text style={styles.noticiaFuente}>{noticia.fuente}</Text>
-              <ExternalLink size={14} color="#8B1538" />
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderDatos = () => (
-    <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <BarChart3 size={24} color="#8B1538" />
-          <Text style={styles.sectionTitle}>Datos y Estadísticas Electorales</Text>
-        </View>
-      </View>
-
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{PARTIDOS_DATA.length}</Text>
-          <Text style={styles.statLabel}>Partidos Políticos</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{CANDIDATOS_DATA.length}</Text>
-          <Text style={styles.statLabel}>Candidatos Registrados</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>8</Text>
-          <Text style={styles.statLabel}>Sectores de Gobierno</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>25M</Text>
-          <Text style={styles.statLabel}>Electores Habilitados</Text>
-        </View>
-      </View>
-
-      <View style={styles.infoBox}>
-        <Text style={styles.infoBoxTitle}>Próximos Pasos del Proceso Electoral</Text>
-        <View style={styles.timeline}>
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <Text style={styles.timelineText}>15 Abril: Debate Presidencial</Text>
-          </View>
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <Text style={styles.timelineText}>30 Abril: Cierre de Campaña</Text>
-          </View>
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <Text style={styles.timelineText}>12 Mayo: Elecciones Generales</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const navItems = [
-    { id: 'partidos', label: 'Partidos', icon: <Building size={20} color="currentColor" /> },
-    { id: 'candidatos', label: 'Candidatos', icon: <Users size={20} color="currentColor" /> },
-    { id: 'planes', label: 'Planes', icon: <BookOpen size={20} color="currentColor" /> },
-    { id: 'noticias', label: 'Noticias', icon: <Newspaper size={20} color="currentColor" /> },
-    { id: 'datos', label: 'Datos', icon: <BarChart3 size={20} color="currentColor" /> },
-  ];
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header Principal */}
       <View style={styles.mainHeader}>
-        <View style={[styles.headerContent, isDesktop && styles.headerContentDesktop]}>
+        <View
+          style={[
+            styles.headerContent,
+            isDesktop && styles.headerContentDesktop,
+          ]}
+        >
           <View style={styles.logoContainer}>
             <Shield size={isDesktop ? 40 : 32} color="#8B1538" />
             <View style={styles.headerText}>
-              <Text style={[styles.mainTitle, isDesktop && styles.mainTitleDesktop]}>
-                Portal Electoral 2024
+              <Text
+                style={[styles.mainTitle, isDesktop && styles.mainTitleDesktop]}
+              >
+                Agrupaciones Políticas 2026
               </Text>
-              <Text style={[styles.mainSubtitle, isDesktop && styles.mainSubtitleDesktop]}>
-                Voto Informado - Democracia Fortalecida
+              <Text
+                style={[
+                  styles.mainSubtitle,
+                  isDesktop && styles.mainSubtitleDesktop,
+                ]}
+              >
+                Consulta los partidos, sus candidatos y propuestas
               </Text>
             </View>
           </View>
-          {isDesktop && (
-            <View style={styles.desktopNav}>
-              {navItems.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.desktopNavItem,
-                    activeSection === item.id && styles.desktopNavItemActive
-                  ]}
-                  onPress={() => setActiveSection(item.id)}
-                >
-                  {item.icon}
-                  <Text style={[
-                    styles.desktopNavLabel,
-                    activeSection === item.id && styles.desktopNavLabelActive
-                  ]}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
         </View>
       </View>
 
-      {/* Navegación Mobile/Tablet */}
-      {!isDesktop && (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.navScroll}
-          contentContainerStyle={styles.navContainer}
-        >
-          {navItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.navItem,
-                activeSection === item.id && styles.navItemActive
-              ]}
-              onPress={() => setActiveSection(item.id)}
-            >
-              {item.icon}
-              <Text style={[
-                styles.navLabel,
-                activeSection === item.id && styles.navLabelActive
-              ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
-
       {/* Barra de búsqueda */}
-      <View style={[styles.searchSection, isDesktop && styles.searchSectionDesktop]}>
-        <View style={[styles.searchContainer, isDesktop && styles.searchContainerDesktop]}>
+      <View
+        style={[styles.searchSection, isDesktop && styles.searchSectionDesktop]}
+      >
+        <View
+          style={[
+            styles.searchContainer,
+            isDesktop && styles.searchContainerDesktop,
+          ]}
+        >
           <Search size={20} color="#6B7280" />
           <TextInput
             style={[styles.searchInput, isDesktop && styles.searchInputDesktop]}
-            placeholder="Buscar partidos, candidatos, propuestas..."
+            placeholder="Buscar por nombre de partido o descripción..."
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -838,41 +407,64 @@ export default function ElectoralApp() {
         </View>
       </View>
 
-      {/* Contenido Principal */}
-      <ScrollView 
+      {/* Contenido */}
+      <ScrollView
         style={styles.contentScroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Tarjeta Informativa */}
+        {/* Card informativa */}
         <View style={[styles.infoCard, isDesktop && styles.infoCardDesktop]}>
           <View style={styles.infoIcon}>
             <Vote size={24} color="#8B1538" />
           </View>
           <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>Ejerce tu Derecho al Voto Informado</Text>
+            <Text style={styles.infoTitle}>Voto informado</Text>
             <Text style={styles.infoText}>
-              Consulta toda la información oficial de candidatos, partidos políticos y sus planes de gobierno. 
-              Un voto consciente y bien fundamentado es la base de una democracia sólida y representativa.
+              Revisa la información de cada agrupación política: planchas
+              presidenciales, candidatos y principales propuestas organizadas
+              por temas.
             </Text>
           </View>
         </View>
 
-        {/* Renderizado condicional de secciones */}
-        {activeSection === 'partidos' && renderPartidos()}
-        {activeSection === 'candidatos' && renderCandidatos()}
-        {activeSection === 'planes' && renderPlanesGobierno()}
-        {activeSection === 'noticias' && renderNoticias()}
-        {activeSection === 'datos' && renderDatos()}
+        <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <Building size={24} color="#8B1538" />
+              <Text style={styles.sectionTitle}>
+                {filteredParties.length} partidos encontrados
+              </Text>
+            </View>
+            {error && (
+              <Text style={{ color: "#DC2626", marginTop: 4 }}>{error}</Text>
+            )}
+            <Text style={styles.sectionSubtitle}>
+              Toca un partido para ver su detalle, candidatos y propuestas.
+            </Text>
+          </View>
 
-        {/* Información Oficial */}
-        <View style={[styles.officialNote, isDesktop && styles.officialNoteDesktop]}>
+          <View style={[styles.grid, isTablet && styles.gridTablet]}>
+            {filteredParties.map(renderPartyCard)}
+            {filteredParties.length === 0 && (
+              <Text style={styles.emptyText}>
+                No se encontraron partidos que coincidan con tu búsqueda.
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Nota oficial */}
+        <View
+          style={[styles.officialNote, isDesktop && styles.officialNoteDesktop]}
+        >
           <Shield size={20} color="#8B1538" />
           <View style={styles.officialContent}>
-            <Text style={styles.officialTitle}>Fuente de Información Oficial</Text>
+            <Text style={styles.officialTitle}>Información de referencia</Text>
             <Text style={styles.officialText}>
-              Todos los datos son proporcionados y verificados por el Jurado Nacional de Elecciones (JNE), 
-              la Oficina Nacional de Procesos Electorales (ONPE) y el Registro Nacional de Identificación 
-              y Estado Civil (RENIEC). Consulta las fuentes primarias para información actualizada y verificada.
+              La información mostrada resume datos de agrupaciones políticas y
+              sus propuestas para las Elecciones Generales 2026. Consulta
+              siempre los portales oficiales del JNE y la ONPE para información
+              actualizada.
             </Text>
           </View>
         </View>
@@ -882,8 +474,406 @@ export default function ElectoralApp() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
+  webChip: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#FEF2F2",
+    marginTop: 6,
+  },
+  webChipText: {
+    marginLeft: 6,
+    fontSize: 12,
+    color: "#8B1538",
+    fontWeight: "600",
+  },
+  loadingDetail: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  loadingDetailText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  detailContainer: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    paddingTop: 12,
+  },
+  detailSection: {
+    marginBottom: 16,
+  },
+  detailSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  detailSectionTitle: {
+    marginLeft: 6,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  formulaContainer: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  personItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    paddingBottom: 6,
+    marginBottom: 6,
+  },
+  personName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  personRole: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  personRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  personDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#8B1538",
+    marginTop: 6,
+    marginRight: 8,
+  },
+  personMeta: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  topicBlock: {
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  topicTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#8B1538",
+    marginBottom: 4,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#6B7280",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
+  infoCard: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    margin: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  infoCardDesktop: {
+    maxWidth: 1200,
+    alignSelf: "center",
+    width: "90%",
+  },
+  infoIcon: {
+    marginRight: 16,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1E293B",
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: "#64748B",
+    lineHeight: 20,
+  },
+  section: {
+    padding: 20,
+  },
+  sectionDesktop: {
+    maxWidth: 1200,
+    alignSelf: "center",
+    width: "100%",
+  },
+  sectionHeader: {
+    marginBottom: 24,
+  },
+  sectionTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#1E293B",
+    marginLeft: 8,
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    color: "#64748B",
+    lineHeight: 22,
+  },
+  partidoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 20,
+    marginBottom: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  partidoCardTablet: {
+    width: "48%",
+  },
+  partidoHeader: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  partidoLogo: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  partidoAcronimo: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  partidoInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  partidoNombre: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1E293B",
+    marginBottom: 4,
+  },
+  partidoFundacion: {
+    fontSize: 14,
+    color: "#64748B",
+    marginBottom: 8,
+  },
+  propuestasSection: {
+    marginBottom: 16,
+  },
+  propuestasTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1E293B",
+    marginBottom: 12,
+  },
+  propuestaItem: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  propuestaBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#8B1538",
+    marginTop: 6,
+    marginRight: 10,
+  },
+  propuestaText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+  mainHeader: {
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerContentDesktop: {
+    maxWidth: 1200,
+    alignSelf: "center",
+    width: "100%",
+  },
+  logoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerText: {
+    marginLeft: 12,
+  },
+  mainTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1E293B",
+  },
+  mainTitleDesktop: {
+    fontSize: 28,
+  },
+  mainSubtitle: {
+    fontSize: 14,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  mainSubtitleDesktop: {
+    fontSize: 16,
+  },
+  desktopNav: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  desktopNavItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  searchSection: {
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  searchSectionDesktop: {
+    maxWidth: 1200,
+    alignSelf: "center",
+    width: "100%",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchContainerDesktop: {
+    maxWidth: 600,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: "#1E293B",
+  },
+  searchInputDesktop: {
+    fontSize: 18,
+  },
+  grid: {
+    // Grid layout for mobile (single column)
+  },
+  gridTablet: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  contentScroll: {
+    flex: 1,
+  },
+  officialNote: {
+    flexDirection: "row",
+    backgroundColor: "#F0F9FF",
+    margin: 20,
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+  },
+  officialNoteDesktop: {
+    maxWidth: 1200,
+    alignSelf: "center",
+    width: "90%",
+  },
+  officialContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  officialTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1E293B",
+    marginBottom: 4,
+  },
+  officialText: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
+  },
+  partidoLogoImage: {
+    width: "80%",
+    height: "80%",
+  },
+});
+
+/* const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
@@ -1602,4 +1592,4 @@ const styles = StyleSheet.create({
     color: '#475569',
     lineHeight: 20,
   },
-});
+}); */
