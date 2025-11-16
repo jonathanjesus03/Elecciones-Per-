@@ -5,14 +5,13 @@ import React, { useEffect, useState } from 'react';
 import { 
   ActivityIndicator, 
   Platform, 
-  SafeAreaView, 
   ScrollView, 
   StyleSheet, 
   Text, 
   TouchableOpacity, 
   View,
-  Animated
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Constantes y tipos
 const COLORS = {

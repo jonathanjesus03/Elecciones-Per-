@@ -17,9 +17,6 @@ import {
   Heart,
   Briefcase,
   GraduationCap,
-  Landmark,
-  Globe2,
-  Microscope,
   TreePine,
   Wifi,
   Car,
@@ -29,7 +26,6 @@ import React, { useState } from 'react';
 import { 
   Linking, 
   Platform, 
-  SafeAreaView, 
   ScrollView, 
   StyleSheet, 
   Text, 
@@ -38,6 +34,7 @@ import {
   View, 
   useWindowDimensions 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Partido {
   id: number;

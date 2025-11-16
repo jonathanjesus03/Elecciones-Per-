@@ -5,8 +5,9 @@ import { router } from 'expo-router';
 import { Check, ChevronDown, Map, MapPin } from 'lucide-react-native';
 import type { FC } from 'react';
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { DEPARTAMENTOS, DISTRITOS_POR_PROVINCIA, PROVINCIAS_POR_DEPARTAMENTO } from './ubigeo-peru';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // Componente Dropdown con Picker
 interface DropdownProps {
   label: string;

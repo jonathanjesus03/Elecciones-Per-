@@ -5,7 +5,8 @@ import { ArrowRight, Check, Info, User, Users } from 'lucide-react-native';
 import type { FC } from 'react';
 import React, { useState } from 'react';
 import type { GestureResponderEvent } from 'react-native';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Tipos de roles de usuario
 type RolUsuario = 'info' | 'elector' | 'mesa' | 'ambos';
@@ -141,8 +142,8 @@ export default function OnboardingScreen2() {
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 {role === 'info' 
-                  ? '✅ Accederás directamente a toda la información electoral' 
-                  : '📍 A continuación necesitaremos tu ubicación para mostrarte información específica de tu local de votación'
+                  ? 'Accederás directamente a toda la información electoral' 
+                  : 'A continuación necesitaremos tu ubicación para mostrarte información específica de tu local de votación'
                 }
               </Text>
             </View>

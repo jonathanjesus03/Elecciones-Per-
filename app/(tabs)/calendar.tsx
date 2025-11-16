@@ -2,14 +2,13 @@ import { AlertCircle, Calendar, CheckCircle2, Clock, ChevronRight, Target } from
 import React, { useState } from 'react';
 import { 
   Platform, 
-  SafeAreaView, 
   ScrollView, 
   StyleSheet, 
   Text, 
   View,
   TouchableOpacity,
-  Animated
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Constantes de diseño
 const COLORS = {

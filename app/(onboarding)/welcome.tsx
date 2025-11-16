@@ -1,8 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ArrowRight, Calendar, MapPin, Users, Vote, CheckCircle } from 'lucide-react-native';
+import { ArrowRight, Calendar, MapPin, Users, Vote } from 'lucide-react-native';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -13,122 +14,100 @@ export default function OnboardingScreen1() {
         colors={['#FEF2F2', '#FFFFFF', '#FFFFFF']}
         style={styles.gradientBackground}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header minimalista */}
-          <View style={styles.headerSection}>
-            <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#DC2626', '#B91C1C']}
-                style={styles.logoGradient}
-              >
-                <Text style={styles.logoEmoji}>🇵🇪</Text>
-              </LinearGradient>
+        {/* Contenedor principal sin ScrollView */}
+        <View style={styles.contentWrapper}>
+          
+          {/* Zona superior (todo lo que puede crecer) */}
+          <View style={styles.topSection}>
+            {/* Header minimalista */}
+            <View style={styles.headerSection}>
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={['#DC2626', '#B91C1C']}
+                  style={styles.logoGradient}
+                >
+                  <Text style={styles.logoEmoji}>🇵🇪</Text>
+                </LinearGradient>
+              </View>
+              
+              <Text style={styles.appName}>InfoVoto</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>ELECCIONES 2026</Text>
+              </View>
             </View>
-            
-            <Text style={styles.appName}>VotoPeru</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>ELECCIONES 2026</Text>
+
+            {/* Hero Section */}
+            <View style={styles.heroSection}>
+              <Text style={styles.heroTitle}>
+                Tu Voz,{'\n'}Tu Voto,{'\n'}
+                <Text style={styles.heroTitleHighlight}>Tu Futuro</Text>
+              </Text>
+              
+              <Text style={styles.heroDescription}>
+                La plataforma para ejercer tu derecho al voto de manera 
+                informada y responsable.
+              </Text>
             </View>
+
+            {/* Features (dejamos todo pero más compacto) */}
+            <View style={styles.featuresGrid}>
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#FEE2E2' }]}>
+                  <Calendar size={24} color="#DC2626" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Calendario</Text>
+                <Text style={styles.featureDesc}>Fechas clave</Text>
+              </View>
+
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#DBEAFE' }]}>
+                  <Vote size={24} color="#2563EB" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Propuestas</Text>
+                <Text style={styles.featureDesc}>Candidatos</Text>
+              </View>
+
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#D1FAE5' }]}>
+                  <MapPin size={24} color="#059669" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Tu Local</Text>
+                <Text style={styles.featureDesc}>Dónde votas</Text>
+              </View>
+
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                  <Users size={24} color="#D97706" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Guía Mesa</Text>
+                <Text style={styles.featureDesc}>Capacitación</Text>
+              </View>
+            </View>
+
           </View>
 
-          {/* Hero Section */}
-          <View style={styles.heroSection}>
-            <Text style={styles.heroTitle}>
-              Tu Voz,{'\n'}Tu Voto,{'\n'}
-              <Text style={styles.heroTitleHighlight}>Tu Futuro</Text>
-            </Text>
-            
-            <Text style={styles.heroDescription}>
-              La plataforma completa para ejercer tu derecho al voto de manera 
-              informada y responsable
-            </Text>
-          </View>
-
-          {/* Features Grid más visual */}
-          <View style={styles.featuresGrid}>
-            <View style={styles.featureCard}>
-              <View style={[styles.featureIconContainer, { backgroundColor: '#FEE2E2' }]}>
-                <Calendar size={28} color="#DC2626" strokeWidth={2.5} />
-              </View>
-              <Text style={styles.featureTitle}>Calendario</Text>
-              <Text style={styles.featureDesc}>Todas las fechas importantes</Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <View style={[styles.featureIconContainer, { backgroundColor: '#DBEAFE' }]}>
-                <Vote size={28} color="#2563EB" strokeWidth={2.5} />
-              </View>
-              <Text style={styles.featureTitle}>Propuestas</Text>
-              <Text style={styles.featureDesc}>Conoce a los candidatos</Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <View style={[styles.featureIconContainer, { backgroundColor: '#D1FAE5' }]}>
-                <MapPin size={28} color="#059669" strokeWidth={2.5} />
-              </View>
-              <Text style={styles.featureTitle}>Tu Local</Text>
-              <Text style={styles.featureDesc}>Ubicación de votación</Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <View style={[styles.featureIconContainer, { backgroundColor: '#FEF3C7' }]}>
-                <Users size={28} color="#D97706" strokeWidth={2.5} />
-              </View>
-              <Text style={styles.featureTitle}>Guía Mesa</Text>
-              <Text style={styles.featureDesc}>Capacitación completa</Text>
-            </View>
-          </View>
-
-          {/* Call to action section */}
-          <View style={styles.ctaSection}>
-            <View style={styles.checkmarkList}>
-              <View style={styles.checkmarkItem}>
-                <CheckCircle size={20} color="#059669" fill="#D1FAE5" />
-                <Text style={styles.checkmarkText}>Información verificada y actualizada</Text>
-              </View>
-              <View style={styles.checkmarkItem}>
-                <CheckCircle size={20} color="#059669" fill="#D1FAE5" />
-                <Text style={styles.checkmarkText}>Fácil de usar y completamente gratis</Text>
-              </View>
-              <View style={styles.checkmarkItem}>
-                <CheckCircle size={20} color="#059669" fill="#D1FAE5" />
-                <Text style={styles.checkmarkText}>Preparado para las elecciones 2026</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Botón principal mejorado */}
-          <TouchableOpacity 
-            style={styles.mainButton} 
-            onPress={() => router.push('/(onboarding)/role')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#DC2626', '#B91C1C', '#991B1B']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.buttonGradient}
+          {/* Zona inferior fija: botón */}
+          <View style={styles.bottomSection}>
+            <TouchableOpacity 
+              style={styles.mainButton} 
+              onPress={() => router.push('/(onboarding)/role')}
+              activeOpacity={0.9}
             >
-              <Text style={styles.buttonText}>Comenzar Ahora</Text>
-              <View style={styles.buttonIconContainer}>
-                <ArrowRight size={20} color="white" strokeWidth={3} />
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Footer quote */}
-          <View style={styles.quoteContainer}>
-            <View style={styles.quoteMark}>
-              <Text style={styles.quoteMarkText}>"</Text>
-            </View>
-            <Text style={styles.quoteText}>
-              La democracia es el gobierno del pueblo, por el pueblo, para el pueblo
-            </Text>
+              <LinearGradient
+                colors={['#DC2626', '#B91C1C', '#991B1B']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>Comenzar Ahora</Text>
+                <View style={styles.buttonIconContainer}>
+                  <ArrowRight size={20} color="white" strokeWidth={3} />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -142,52 +121,64 @@ const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
+  contentWrapper: {
+    flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingTop: 16,
+    paddingBottom: 16,
+    justifyContent: 'space-between',
   },
-  
+
+  // Top section
+  topSection: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+
+  // Bottom section (botón fijo)
+  bottomSection: {
+    paddingTop: 8,
+  },
+
   // Header
   headerSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 24, // antes 40
   },
   logoContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   logoGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,    // antes 80
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   logoEmoji: {
-    fontSize: 40,
+    fontSize: 32,
   },
   appName: {
-    fontSize: 32,
+    fontSize: 26, // antes 32
     fontWeight: '800',
     color: '#1F2937',
     letterSpacing: -0.5,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   badge: {
     backgroundColor: '#DC2626',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
     borderRadius: 20,
   },
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
   },
@@ -195,26 +186,26 @@ const styles = StyleSheet.create({
   // Hero Section
   heroSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 24, // antes 40
     paddingHorizontal: 8,
   },
   heroTitle: {
-    fontSize: 42,
+    fontSize: 34, // antes 42
     fontWeight: '900',
     color: '#111827',
     textAlign: 'center',
-    lineHeight: 50,
-    marginBottom: 16,
-    letterSpacing: -1,
+    lineHeight: 40,
+    marginBottom: 12,
+    letterSpacing: -0.8,
   },
   heroTitleHighlight: {
     color: '#DC2626',
   },
   heroDescription: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
     maxWidth: 320,
   },
 
@@ -223,64 +214,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    marginBottom: 20, // antes 32
   },
   featureCard: {
     width: (width - 64) / 2,
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 16,
+    paddingVertical: 14, // más compactos
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginBottom: 12,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
   featureIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   featureTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 4,
+    marginBottom: 2,
     textAlign: 'center',
   },
   featureDesc: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 14,
   },
 
   // CTA Section
   ctaSection: {
     backgroundColor: '#F9FAFB',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 16, // antes 24
+    marginBottom: 8, // antes 24
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   checkmarkList: {
-    gap: 16,
+    gap: 10,
   },
   checkmarkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   checkmarkText: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#374151',
-    fontWeight: '600',
+    fontWeight: '500',
     flex: 1,
   },
 
@@ -288,7 +280,6 @@ const styles = StyleSheet.create({
   mainButton: {
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 32,
     shadowColor: '#DC2626',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
@@ -296,48 +287,25 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   buttonGradient: {
-    paddingVertical: 20,
-    paddingHorizontal: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   buttonIconContainer: {
-    marginLeft: 12,
+    marginLeft: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  // Quote
-  quoteContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  quoteMark: {
-    marginBottom: 8,
-  },
-  quoteMarkText: {
-    fontSize: 48,
-    color: '#E5E7EB',
-    fontWeight: '700',
-    lineHeight: 40,
-  },
-  quoteText: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    lineHeight: 20,
-    maxWidth: 280,
   },
 });

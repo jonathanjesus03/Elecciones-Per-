@@ -1,17 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AlertCircle, Calendar, Clock, MapPin, Users, ChevronRight, Target, Shield, Fingerprint, FileText, CheckCircle } from 'lucide-react-native';
+import { AlertCircle, Calendar, CheckCircle, ChevronRight, Clock, FileText, Fingerprint, MapPin, Shield, Target, Users } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { 
-  ActivityIndicator, 
-  Platform, 
-  SafeAreaView, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  View,
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Animated
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Constantes de diseño
 const COLORS = {
