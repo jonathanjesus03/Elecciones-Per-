@@ -1,8 +1,58 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { Bell, Calendar, FileText, Globe, GraduationCap, Users, Vote } from 'lucide-react-native';
+import { Bell, Calendar, FileText, Globe, GraduationCap, Users, Vote, ChevronRight, MapPin } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { 
+  ActivityIndicator, 
+  Platform, 
+  SafeAreaView, 
+  ScrollView, 
+  StyleSheet, 
+  Text, 
+  TouchableOpacity, 
+  View,
+  Animated
+} from 'react-native';
+
+// Constantes y tipos
+const COLORS = {
+  primary: '#8B1538',
+  primaryDark: '#6A102B',
+  primaryLight: '#FEF2F2',
+  primaryGradient: ['#8B1538', '#A51B44'],
+  secondary: '#1E40AF',
+  accent: '#DC2626',
+  background: {
+    light: '#F8FAFC',
+    white: '#FFFFFF',
+    card: '#FFFFFF',
+    gradient: ['#FFFFFF', '#FEF2F2']
+  },
+  text: {
+    primary: '#1F2937',
+    secondary: '#6B7280',
+    light: '#9CA3AF',
+    white: '#FFFFFF'
+  },
+  border: {
+    light: '#F1F5F9',
+    medium: '#E5E7EB'
+  },
+  status: {
+    success: '#059669',
+    warning: '#D97706',
+    error: '#DC2626'
+  }
+} as const;
+
+const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  xxl: 32
+} as const;
 
 type RolUsuario = 'info' | 'elector' | 'mesa' | 'ambos';
 
@@ -12,6 +62,169 @@ interface UbicacionUsuario {
   distrito: string;
 }
 
+interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  isNew?: boolean;
+  category?: string;
+}
+
+// Componentes reutilizables
+const LoadingScreen = () => (
+  <SafeAreaView style={styles.container}>
+    <View style={styles.loadingContainer}>
+      <View style={styles.loadingSpinner}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+      <Text style={styles.loadingText}>Cargando información...</Text>
+    </View>
+  </SafeAreaView>
+);
+
+const PeruvianFlagStrip = () => (
+  <View style={styles.flagStripe}>
+    <View style={[styles.stripeSection, { backgroundColor: COLORS.primary }]} />
+    <View style={[styles.stripeSection, { backgroundColor: COLORS.background.white }]} />
+    <View style={[styles.stripeSection, { backgroundColor: COLORS.primary }]} />
+  </View>
+);
+
+const RoleBadge = ({ role }: { role: RolUsuario }) => {
+  const isMiembroMesa = role === 'mesa' || role === 'ambos';
+  
+  if (!isMiembroMesa) return null;
+  
+  return (
+    <View style={styles.badge}>
+      <View style={styles.badgeDot} />
+      <Text style={styles.badgeText}>Miembro de mesa</Text>
+    </View>
+  );
+};
+
+const UserLocation = ({ location }: { location: UbicacionUsuario | null }) => {
+  if (!location) return null;
+  
+  return (
+    <View style={styles.locationContainer}>
+      <MapPin size={14} color={COLORS.text.secondary} />
+      <Text style={styles.locationText}>
+        {location.distrito}, {location.departamento}
+      </Text>
+    </View>
+  );
+};
+
+const QuickAccessCard = ({ 
+  icon: Icon, 
+  title, 
+  subtitle, 
+  onPress,
+  color = COLORS.primary
+}: {
+  icon: React.ComponentType<any>;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  color?: string;
+}) => (
+  <TouchableOpacity 
+    style={styles.quickAccessCard}
+    onPress={onPress}
+    activeOpacity={0.8}
+  >
+    <View style={[styles.quickAccessIcon, { backgroundColor: `${color}15` }]}>
+      <Icon size={28} color={color} />
+    </View>
+    <View style={styles.quickAccessContent}>
+      <Text style={styles.quickAccessTitle}>{title}</Text>
+      <Text style={styles.quickAccessSubtitle}>{subtitle}</Text>
+    </View>
+    <View style={styles.quickAccessArrow}>
+      <ChevronRight size={16} color={COLORS.text.light} />
+    </View>
+  </TouchableOpacity>
+);
+
+const NewsCard = ({ title, description, date, isNew = false, category }: NewsItem) => (
+  <View style={styles.newsCard}>
+    <View style={styles.newsHeader}>
+      <View style={styles.newsCategoryContainer}>
+        {isNew && (
+          <View style={styles.newsBadge}>
+            <Text style={styles.newsBadgeText}>Nuevo</Text>
+          </View>
+        )}
+        {category && (
+          <Text style={styles.newsCategory}>{category}</Text>
+        )}
+      </View>
+      <Text style={styles.newsDate}>{date}</Text>
+    </View>
+    <Text style={styles.newsTitle}>{title}</Text>
+    <Text style={styles.newsDescription}>{description}</Text>
+  </View>
+);
+
+const CountdownCard = () => (
+  <View style={styles.countdownCard}>
+    <View style={styles.countdownHeader}>
+      <View style={styles.countdownIcon}>
+        <Vote size={24} color={COLORS.primary} />
+      </View>
+      <View style={styles.countdownTitleContainer}>
+        <Text style={styles.countdownTitle}>Elecciones 2026</Text>
+        <Text style={styles.countdownSubtitle}>Próximas elecciones generales</Text>
+      </View>
+    </View>
+    
+    <View style={styles.countdownContent}>
+      <View style={styles.countdownItem}>
+        <Text style={styles.countdownNumber}>27</Text>
+        <Text style={styles.countdownLabel}>días</Text>
+      </View>
+      <View style={styles.countdownSeparator}>
+        <Text style={styles.countdownSeparatorText}>:</Text>
+      </View>
+      <View style={styles.countdownItem}>
+        <Text style={styles.countdownNumber}>14</Text>
+        <Text style={styles.countdownLabel}>horas</Text>
+      </View>
+      <View style={styles.countdownSeparator}>
+        <Text style={styles.countdownSeparatorText}>:</Text>
+      </View>
+      <View style={styles.countdownItem}>
+        <Text style={styles.countdownNumber}>32</Text>
+        <Text style={styles.countdownLabel}>min</Text>
+      </View>
+    </View>
+    
+    <View style={styles.countdownFooter}>
+      <Calendar size={16} color={COLORS.text.secondary} />
+      <Text style={styles.countdownDate}>11 de Abril, 2026</Text>
+    </View>
+  </View>
+);
+
+const SectionHeader = ({ title, actionText, onAction }: { 
+  title: string; 
+  actionText?: string; 
+  onAction?: () => void;
+}) => (
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    {actionText && (
+      <TouchableOpacity onPress={onAction} style={styles.sectionAction}>
+        <Text style={styles.sectionActionText}>{actionText}</Text>
+        <ChevronRight size={16} color={COLORS.primary} />
+      </TouchableOpacity>
+    )}
+  </View>
+);
+
+// Componente principal
 export default function HomeScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -43,189 +256,167 @@ export default function HomeScreen() {
     }
   };
 
-  const isMiembroMesa = role === 'mesa' || role === 'ambos';
-
   const getGreeting = () => {
-    if (role === 'elector' && location) {
-      return `Hola, Elector de ${location.departamento}, ${location.distrito}`;
-    } else if (role === 'info' && location) {
-      return `Hola, ciudadano informado de ${location.distrito}`;
+    const hour = new Date().getHours();
+    let timeGreeting = 'Buenos días';
+    
+    if (hour >= 12 && hour < 18) {
+      timeGreeting = 'Buenas tardes';
+    } else if (hour >= 18) {
+      timeGreeting = 'Buenas noches';
     }
-    return 'Hola, ciudadano';
+
+    if (role === 'elector') {
+      return `${timeGreeting}, Elector`;
+    } else if (role === 'info') {
+      return `${timeGreeting}, Ciudadano`;
+    } else if (role === 'mesa' || role === 'ambos') {
+      return `${timeGreeting}, Miembro de Mesa`;
+    }
+    
+    return `${timeGreeting}, Ciudadano`;
   };
 
-  const getRoleMessage = () => {
-    if (role === 'info') {
-      return 'Conoce cómo funciona el proceso electoral.';
-    } else if (role === 'elector' || role === 'mesa' || role === 'ambos') {
-      return 'Revisa tus pasos clave.';
+  const newsData: NewsItem[] = [
+    {
+      id: '1',
+      title: 'Cronograma Electoral 2026 - Fechas Clave Confirmadas',
+      description: 'El JNE ha publicado el cronograma oficial con todas las fechas importantes del proceso electoral.',
+      date: 'Hace 2 horas',
+      isNew: true,
+      category: 'Actualidad'
+    },
+    {
+      id: '2',
+      title: 'Capacitación Virtual para Miembros de Mesa',
+      description: 'ONPE anuncia nuevas fechas para la capacitación virtual obligatoria de miembros de mesa.',
+      date: 'Hace 5 horas',
+      category: 'Capacitación'
+    },
+    {
+      id: '3',
+      title: 'Nuevos Protocolos de Bioseguridad para Locales de Votación',
+      description: 'Conoce las medidas de seguridad implementadas para garantizar votación segura.',
+      date: 'Ayer',
+      category: 'Protocolos'
     }
-    return 'Conoce tu rol en estas elecciones.';
-  };
+  ];
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B1538" />
-          <Text style={styles.loadingText}>Cargando...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 1. Encabezado Personal */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header con gradiente */}
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.subtitle}>Bienvenido a VotoPeru</Text>
-            {isMiembroMesa && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>Miembro de mesa</Text>
-              </View>
-            )}
+          <View style={styles.headerContent}>
+            <View style={styles.userInfo}>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <UserLocation location={location} />
+            </View>
+            <RoleBadge role={role!} />
           </View>
           <TouchableOpacity style={styles.notificationButton}>
-            <Bell size={24} color="#4B5563" />
+            <View style={styles.notificationDot} />
+            <Bell size={24} color={COLORS.text.primary} />
           </TouchableOpacity>
         </View>
 
-        {/* Franja peruana */}
-        <View style={styles.banderaStripe}>
-          <View style={[styles.stripeSection, { backgroundColor: '#8B1538' }]} />
-          <View style={[styles.stripeSection, { backgroundColor: '#FFFFFF' }]} />
-          <View style={[styles.stripeSection, { backgroundColor: '#8B1538' }]} />
-        </View>
+        {/* Bandera Peruana decorativa */}
+        <PeruvianFlagStrip />
 
-        {/* Información destacada */}
-        <View style={styles.highlightCard}>
-          <View style={styles.highlightHeader}>
-            <Vote size={28} color="#8B1538" />
-            <Text style={styles.highlightTitle}>Elecciones 2026</Text>
-          </View>
-          <Text style={styles.highlightText}>
-            Faltan <Text style={styles.highlightBold}>X días</Text> para las elecciones generales
-          </Text>
-          <View style={styles.highlightFooter}>
-            <Text style={styles.highlightDate}>Fecha: 11 de Abril, 2026</Text>
-          </View>
-        </View>
-
-        {/* Sección de accesos rápidos */}
+        {/* Contador de elecciones */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Accesos Rápidos</Text>
-          
+          <CountdownCard />
+        </View>
+
+        {/* Accesos Rápidos */}
+        <View style={styles.section}>
+          <SectionHeader 
+            title="Accesos Rápidos" 
+            actionText="Ver todos"
+            onAction={() => router.push('/(tabs)')}
+          />
           <View style={styles.quickAccessGrid}>
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
+            <QuickAccessCard
+              icon={Vote}
+              title="Mi Local"
+              subtitle="de Votación"
               onPress={() => router.push('/(tabs)/voting')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickAccessIcon}>
-                <Vote size={24} color="#8B1538" />
-              </View>
-              <Text style={styles.quickAccessTitle}>Mi Local</Text>
-              <Text style={styles.quickAccessSubtitle}>de Votación</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
+              color={COLORS.primary}
+            />
+            <QuickAccessCard
+              icon={FileText}
+              title="Propuestas"
+              subtitle="de Partidos"
               onPress={() => router.push('/(tabs)/parties')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickAccessIcon}>
-                <FileText size={24} color="#8B1538" />
-              </View>
-              <Text style={styles.quickAccessTitle}>Propuestas</Text>
-              <Text style={styles.quickAccessSubtitle}>de Partidos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
+              color={COLORS.secondary}
+            />
+            <QuickAccessCard
+              icon={Users}
+              title="Mi Rol"
+              subtitle="en Elecciones"
               onPress={() => router.push('/(tabs)/myrole')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickAccessIcon}>
-                <Users size={24} color="#8B1538" />
-              </View>
-              <Text style={styles.quickAccessTitle}>Mi Rol</Text>
-              <Text style={styles.quickAccessSubtitle}>en Elecciones</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
+              color={COLORS.status.warning}
+            />
+            <QuickAccessCard
+              icon={Calendar}
+              title="Calendario"
+              subtitle="Electoral"
               onPress={() => router.push('/(tabs)/calendar')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickAccessIcon}>
-                <Calendar size={24} color="#8B1538" />
+              color={COLORS.status.success}
+            />
+          </View>
+        </View>
+
+        {/* Más herramientas */}
+        <View style={styles.section}>
+          <SectionHeader title="Más Herramientas" />
+          <View style={styles.toolsGrid}>
+            <TouchableOpacity style={styles.toolCard}>
+              <View style={[styles.toolIcon, { backgroundColor: `${COLORS.primary}15` }]}>
+                <Globe size={22} color={COLORS.primary} />
               </View>
-              <Text style={styles.quickAccessTitle}>Calendario</Text>
-              <Text style={styles.quickAccessSubtitle}>Electoral</Text>
+              <Text style={styles.toolText}>Fuentes Oficiales</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.toolCard}>
+              <View style={[styles.toolIcon, { backgroundColor: `${COLORS.secondary}15` }]}>
+                <GraduationCap size={22} color={COLORS.secondary} />
+              </View>
+              <Text style={styles.toolText}>Tutorial App</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.toolCard}>
+              <View style={[styles.toolIcon, { backgroundColor: `${COLORS.status.success}15` }]}>
+                <Users size={22} color={COLORS.status.success} />
+              </View>
+              <Text style={styles.toolText}>Mi Perfil</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 3. Atajos Secundarios */}
+        {/* Noticias Recientes */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Más opciones</Text>
-          
-          <View style={styles.shortcutsRow}>
-            <TouchableOpacity 
-              style={styles.shortcutButton}
-              onPress={() => router.push('/(tabs)/parties')}
-              activeOpacity={0.7}
-            >
-              <FileText size={20} color="#8B1538" />
-              <Text style={styles.shortcutText}>Partidos y propuestas</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.shortcutButton}
-              onPress={() => router.push('/(tabs)/myrole')}
-              activeOpacity={0.7}
-            >
-              <Globe size={20} color="#8B1538" />
-              <Text style={styles.shortcutText}>Fuentes oficiales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.shortcutButton}
-              onPress={() => router.push('/(tabs)/myrole')}
-              activeOpacity={0.7}
-            >
-              <GraduationCap size={20} color="#8B1538" />
-              <Text style={styles.shortcutText}>Tutorial de la app</Text>
-            </TouchableOpacity>
+          <SectionHeader 
+            title="Últimas Noticias" 
+            actionText="Ver todas"
+            onAction={() => console.log('Ver todas las noticias')}
+          />
+          <View style={styles.newsList}>
+            {newsData.map(news => (
+              <NewsCard key={news.id} {...news} />
+            ))}
           </View>
         </View>
 
-        {/* Noticias recientes */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Últimas Noticias</Text>
-          
-          <View style={styles.newsCard}>
-            <View style={styles.newsBadge}>
-              <Text style={styles.newsBadgeText}>Nuevo</Text>
-            </View>
-            <Text style={styles.newsTitle}>Cronograma Electoral 2026</Text>
-            <Text style={styles.newsDescription}>
-              Conoce las fechas importantes y plazos para el proceso electoral.
-            </Text>
-            <Text style={styles.newsDate}>Hace 2 horas</Text>
-          </View>
-
-          <View style={styles.newsCard}>
-            <Text style={styles.newsTitle}>Capacitación Virtual para Miembros de Mesa</Text>
-            <Text style={styles.newsDescription}>
-              ONPE anuncia fechas de capacitación obligatoria.
-            </Text>
-            <Text style={styles.newsDate}>Hace 5 horas</Text>
-          </View>
-        </View>
+        {/* Espacio al final */}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -234,15 +425,318 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.background.light,
   },
+  scrollContent: {
+    paddingBottom: SPACING.xl,
+  },
+  // Loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background.light,
+  },
+  loadingSpinner: {
+    marginBottom: SPACING.md,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    fontWeight: '500',
+  },
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: SPACING.lg,
+    paddingTop: SPACING.md,
+    backgroundColor: COLORS.background.white,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  headerContent: {
+    flex: 1,
+  },
+  userInfo: {
+    marginBottom: SPACING.sm,
+  },
+  greeting: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    lineHeight: 34,
+  },
+  notificationButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.background.light,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 16,
-    backgroundColor: '#FFFFFF',
+    marginLeft: SPACING.sm,
+    position: 'relative',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.accent,
+    zIndex: 1,
+  },
+  // Location
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  locationText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginLeft: SPACING.xs,
+    fontWeight: '500',
+  },
+  // Bandera
+  flagStripe: {
+    flexDirection: 'row',
+    height: 3,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  stripeSection: {
+    flex: 1,
+  },
+  // Secciones generales
+  section: {
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+  },
+  sectionAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionActionText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginRight: SPACING.xs,
+  },
+  // Countdown Card
+  countdownCard: {
+    backgroundColor: COLORS.background.white,
+    padding: SPACING.lg,
+    borderRadius: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  countdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  countdownIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  countdownTitleContainer: {
+    flex: 1,
+  },
+  countdownTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginBottom: 2,
+  },
+  countdownSubtitle: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+  },
+  countdownContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  countdownItem: {
+    alignItems: 'center',
+  },
+  countdownNumber: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.primary,
+    lineHeight: 38,
+  },
+  countdownLabel: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  countdownSeparator: {
+    marginHorizontal: SPACING.sm,
+  },
+  countdownSeparatorText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.text.light,
+    marginBottom: 16,
+  },
+  countdownFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+  },
+  countdownDate: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+  },
+  // Accesos rápidos
+  quickAccessGrid: {
+    gap: SPACING.md,
+  },
+  quickAccessCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.background.white,
+    padding: SPACING.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  quickAccessIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  quickAccessContent: {
+    flex: 1,
+  },
+  quickAccessTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginBottom: 2,
+  },
+  quickAccessSubtitle: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+  },
+  quickAccessArrow: {
+    opacity: 0.6,
+  },
+  // Tools Grid
+  toolsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  toolCard: {
+    flex: 1,
+    backgroundColor: COLORS.background.white,
+    padding: SPACING.md,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  toolIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  toolText: {
+    fontSize: 12,
+    color: COLORS.text.primary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Noticias
+  newsList: {
+    gap: SPACING.md,
+  },
+  newsCard: {
+    backgroundColor: COLORS.background.white,
+    padding: SPACING.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -251,321 +745,81 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
       },
       android: {
-        elevation: 2,
-      },
-    }),
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
-  },
-  notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  banderaStripe: {
-    flexDirection: 'row',
-    height: 4,
-    marginHorizontal: 20,
-    marginTop: 16,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  stripeSection: {
-    flex: 1,
-  },
-  highlightCard: {
-    backgroundColor: '#FEF2F2',
-    margin: 20,
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#8B1538',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  highlightHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  highlightTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#991B1B',
-    marginLeft: 12,
-  },
-  highlightText: {
-    fontSize: 16,
-    color: '#4B5563',
-    marginBottom: 12,
-  },
-  highlightBold: {
-    fontWeight: 'bold',
-    color: '#991B1B',
-  },
-  highlightFooter: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#FECACA',
-  },
-  highlightDate: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '600',
-  },
-  section: {
-    padding: 20,
-    paddingTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  quickAccessGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  quickAccessCard: {
-    backgroundColor: '#FFFFFF',
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
         elevation: 3,
       },
     }),
   },
-  quickAccessIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FEF2F2',
-    justifyContent: 'center',
+  newsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.sm,
+  },
+  newsCategoryContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#8B1538',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  quickAccessTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#111827',
-    textAlign: 'center',
-  },
-  quickAccessSubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  newsCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    flex: 1,
   },
   newsBadge: {
-    backgroundColor: '#8B1538',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
+    borderRadius: 6,
+    marginRight: SPACING.sm,
   },
   newsBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
+    color: COLORS.text.white,
+    fontSize: 10,
+    fontWeight: '700',
   },
-  newsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  newsDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-    marginBottom: 8,
+  newsCategory: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    fontWeight: '600',
   },
   newsDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.text.light,
+    fontWeight: '500',
   },
-  // Estilos para carga
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
+  newsTitle: {
     fontSize: 16,
-    color: '#6B7280',
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
+    lineHeight: 22,
   },
-  // Estilos para badge
+  newsDescription: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    lineHeight: 20,
+  },
+  // Badge
   badge: {
-    backgroundColor: '#8B1538',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.primary}15`,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     alignSelf: 'flex-start',
-    marginTop: 8,
+    borderWidth: 1,
+    borderColor: `${COLORS.primary}30`,
+  },
+  badgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
+    marginRight: 6,
   },
   badgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  // Estilos para cards grandes
-  largeCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.12,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  largeCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginLeft: 12,
-    flex: 1,
-  },
-  largeCardContent: {
-    fontSize: 15,
-    color: '#6B7280',
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  cardButton: {
-    backgroundColor: '#8B1538',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#8B1538',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  cardButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  // Estilos para atajos secundarios
-  shortcutsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  shortcutButton: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  shortcutText: {
+    color: COLORS.primary,
     fontSize: 12,
-    color: '#111827',
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 16,
-    fontWeight: '500',
+    fontWeight: '700',
+  },
+  // Bottom spacer
+  bottomSpacer: {
+    height: SPACING.xxl,
   },
 });

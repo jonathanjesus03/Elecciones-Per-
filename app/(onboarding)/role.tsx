@@ -61,8 +61,14 @@ export default function OnboardingScreen2() {
       // TODO: Cuando tengas backend, enviar aquí:
       // await enviarRolAlBackend(finalRole);
       
-      // Continuar al siguiente paso
-      router.push('/(onboarding)/location');
+      // Lógica de navegación mejorada
+      if (finalRole === 'info') {
+        // Si solo quiere informarse, va directamente a la app principal
+        router.replace('/(tabs)');
+      } else {
+        // Si es elector o miembro de mesa, necesita ubicación
+        router.push('/(onboarding)/location');
+      }
     } catch (e) {
       console.error("Error guardando rol", e);
     }
@@ -90,7 +96,7 @@ export default function OnboardingScreen2() {
           <View style={styles.cardsContainer}>
             <Card 
               title="Solo quiero informarme" 
-              text="Ver propuestas, calendario y noticias generales." 
+              text="Ver propuestas, calendario y noticias generales. Acceso inmediato." 
               icon={Info} 
               onPress={() => {
                 setRole('info');
@@ -100,14 +106,14 @@ export default function OnboardingScreen2() {
             />
             <Card 
               title="Soy elector" 
-              text="Quiero saber dónde votar y cómo será mi voto." 
+              text="Quiero saber dónde votar y cómo será mi voto. Requiere ubicación." 
               icon={User} 
               onPress={() => setRole('elector')}
               isSelected={role === 'elector'}
             />
             <Card 
               title="Soy miembro de mesa" 
-              text="Necesito conocer mis deberes y el paso a paso." 
+              text="Necesito conocer mis deberes y el paso a paso. Requiere ubicación." 
               icon={Users} 
               onPress={() => setRole('mesa')}
               isSelected={role === 'mesa'}
@@ -129,6 +135,18 @@ export default function OnboardingScreen2() {
               </Text>
             </TouchableOpacity>
           )}
+
+          {/* Información adicional sobre el flujo */}
+          {role && (
+            <View style={styles.infoBox}>
+              <Text style={styles.infoText}>
+                {role === 'info' 
+                  ? '✅ Accederás directamente a toda la información electoral' 
+                  : '📍 A continuación necesitaremos tu ubicación para mostrarte información específica de tu local de votación'
+                }
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Botón con gradiente */}
@@ -144,7 +162,9 @@ export default function OnboardingScreen2() {
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
           >
-            <Text style={styles.buttonText}>Siguiente</Text>
+            <Text style={styles.buttonText}>
+              {role === 'info' ? 'Comenzar' : 'Siguiente'}
+            </Text>
             <ArrowRight size={22} color="white" style={{ marginLeft: 8 }} />
           </LinearGradient>
         </TouchableOpacity>
@@ -294,6 +314,20 @@ const styles = StyleSheet.create({
     color: '#2A2A2A',
     fontWeight: '600',
     flex: 1,
+  },
+  infoBox: {
+    backgroundColor: '#F0F9FF',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    marginBottom: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#1E40AF',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   button: {
     marginTop: 8,
