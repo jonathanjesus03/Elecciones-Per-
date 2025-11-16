@@ -1,47 +1,54 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { Bell, Calendar, FileText, Globe, GraduationCap, Users, Vote, ChevronRight, MapPin } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { 
-  ActivityIndicator, 
-  Platform, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import {
+  Calendar,
+  ChevronRight,
+  FileText,
+  MapPin,
+  Users,
+  Vote
+} from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Constantes y tipos
 const COLORS = {
-  primary: '#8B1538',
-  primaryDark: '#6A102B',
-  primaryLight: '#FEF2F2',
-  primaryGradient: ['#8B1538', '#A51B44'],
-  secondary: '#1E40AF',
-  accent: '#DC2626',
+  primary: "#8B1538",
+  primaryDark: "#6A102B",
+  primaryLight: "#FEF2F2",
+  primaryGradient: ["#8B1538", "#A51B44"],
+  secondary: "#1E40AF",
+  accent: "#DC2626",
   background: {
-    light: '#F8FAFC',
-    white: '#FFFFFF',
-    card: '#FFFFFF',
-    gradient: ['#FFFFFF', '#FEF2F2']
+    light: "#F8FAFC",
+    white: "#FFFFFF",
+    card: "#FFFFFF",
+    gradient: ["#FFFFFF", "#FEF2F2"],
   },
   text: {
-    primary: '#1F2937',
-    secondary: '#6B7280',
-    light: '#9CA3AF',
-    white: '#FFFFFF'
+    primary: "#1F2937",
+    secondary: "#6B7280",
+    light: "#9CA3AF",
+    white: "#FFFFFF",
   },
   border: {
-    light: '#F1F5F9',
-    medium: '#E5E7EB'
+    light: "#F1F5F9",
+    medium: "#E5E7EB",
   },
   status: {
-    success: '#059669',
-    warning: '#D97706',
-    error: '#DC2626'
-  }
+    success: "#059669",
+    warning: "#D97706",
+    error: "#DC2626",
+  },
 } as const;
 
 const SPACING = {
@@ -50,10 +57,10 @@ const SPACING = {
   md: 16,
   lg: 20,
   xl: 24,
-  xxl: 32
+  xxl: 32,
 } as const;
 
-type RolUsuario = 'info' | 'elector' | 'mesa' | 'ambos';
+type RolUsuario = "info" | "elector" | "mesa" | "ambos";
 
 interface UbicacionUsuario {
   departamento: string;
@@ -85,16 +92,21 @@ const LoadingScreen = () => (
 const PeruvianFlagStrip = () => (
   <View style={styles.flagStripe}>
     <View style={[styles.stripeSection, { backgroundColor: COLORS.primary }]} />
-    <View style={[styles.stripeSection, { backgroundColor: COLORS.background.white }]} />
+    <View
+      style={[
+        styles.stripeSection,
+        { backgroundColor: COLORS.background.white },
+      ]}
+    />
     <View style={[styles.stripeSection, { backgroundColor: COLORS.primary }]} />
   </View>
 );
 
 const RoleBadge = ({ role }: { role: RolUsuario }) => {
-  const isMiembroMesa = role === 'mesa' || role === 'ambos';
-  
+  const isMiembroMesa = role === "mesa" || role === "ambos";
+
   if (!isMiembroMesa) return null;
-  
+
   return (
     <View style={styles.badge}>
       <View style={styles.badgeDot} />
@@ -105,7 +117,7 @@ const RoleBadge = ({ role }: { role: RolUsuario }) => {
 
 const UserLocation = ({ location }: { location: UbicacionUsuario | null }) => {
   if (!location) return null;
-  
+
   return (
     <View style={styles.locationContainer}>
       <MapPin size={14} color={COLORS.text.secondary} />
@@ -116,12 +128,12 @@ const UserLocation = ({ location }: { location: UbicacionUsuario | null }) => {
   );
 };
 
-const QuickAccessCard = ({ 
-  icon: Icon, 
-  title, 
-  subtitle, 
+const QuickAccessCard = ({
+  icon: Icon,
+  title,
+  subtitle,
   onPress,
-  color = COLORS.primary
+  color = COLORS.primary,
 }: {
   icon: React.ComponentType<any>;
   title: string;
@@ -129,7 +141,7 @@ const QuickAccessCard = ({
   onPress: () => void;
   color?: string;
 }) => (
-  <TouchableOpacity 
+  <TouchableOpacity
     style={styles.quickAccessCard}
     onPress={onPress}
     activeOpacity={0.8}
@@ -147,7 +159,13 @@ const QuickAccessCard = ({
   </TouchableOpacity>
 );
 
-const NewsCard = ({ title, description, date, isNew = false, category }: NewsItem) => (
+const NewsCard = ({
+  title,
+  description,
+  date,
+  isNew = false,
+  category,
+}: NewsItem) => (
   <View style={styles.newsCard}>
     <View style={styles.newsHeader}>
       <View style={styles.newsCategoryContainer}>
@@ -156,9 +174,7 @@ const NewsCard = ({ title, description, date, isNew = false, category }: NewsIte
             <Text style={styles.newsBadgeText}>Nuevo</Text>
           </View>
         )}
-        {category && (
-          <Text style={styles.newsCategory}>{category}</Text>
-        )}
+        {category && <Text style={styles.newsCategory}>{category}</Text>}
       </View>
       <Text style={styles.newsDate}>{date}</Text>
     </View>
@@ -175,10 +191,12 @@ const CountdownCard = () => (
       </View>
       <View style={styles.countdownTitleContainer}>
         <Text style={styles.countdownTitle}>Elecciones 2026</Text>
-        <Text style={styles.countdownSubtitle}>Próximas elecciones generales</Text>
+        <Text style={styles.countdownSubtitle}>
+          Próximas elecciones generales
+        </Text>
       </View>
     </View>
-    
+
     <View style={styles.countdownContent}>
       <View style={styles.countdownItem}>
         <Text style={styles.countdownNumber}>27</Text>
@@ -199,7 +217,7 @@ const CountdownCard = () => (
         <Text style={styles.countdownLabel}>min</Text>
       </View>
     </View>
-    
+
     <View style={styles.countdownFooter}>
       <Calendar size={16} color={COLORS.text.secondary} />
       <Text style={styles.countdownDate}>11 de Abril, 2026</Text>
@@ -207,9 +225,13 @@ const CountdownCard = () => (
   </View>
 );
 
-const SectionHeader = ({ title, actionText, onAction }: { 
-  title: string; 
-  actionText?: string; 
+const SectionHeader = ({
+  title,
+  actionText,
+  onAction,
+}: {
+  title: string;
+  actionText?: string;
   onAction?: () => void;
 }) => (
   <View style={styles.sectionHeader}>
@@ -228,7 +250,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<RolUsuario | null>(null);
-  const [location, setLocation] = useState<UbicacionUsuario | null>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [location, setLocation] = useState<any | null>(null);
 
   useEffect(() => {
     loadUserData();
@@ -236,69 +259,79 @@ export default function HomeScreen() {
 
   const loadUserData = async () => {
     try {
-      const [storedRole, storedLocation] = await Promise.all([
-        AsyncStorage.getItem('@role'),
-        AsyncStorage.getItem('@location'),
+      const [storedRole, storedUser] = await Promise.all([
+        AsyncStorage.getItem("@role"),
+        AsyncStorage.getItem("@user"),
       ]);
 
       if (storedRole) {
         setRole(storedRole as RolUsuario);
       }
 
-      if (storedLocation) {
-        setLocation(JSON.parse(storedLocation));
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+
+        // Extraemos ubicación desde votingLocation del usuario
+        setLocation({
+          departamento: parsed.votingLocation.department,
+          provincia: parsed.votingLocation.province,
+          distrito: parsed.votingLocation.district,
+        });
       }
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error("Error loading user data:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const hasPersonalData = !!user;
+
   const getGreeting = () => {
     const hour = new Date().getHours();
-    let timeGreeting = 'Buenos días';
-    
-    if (hour >= 12 && hour < 18) {
-      timeGreeting = 'Buenas tardes';
-    } else if (hour >= 18) {
-      timeGreeting = 'Buenas noches';
+    let timeGreeting = "Buenos días";
+
+    if (hour >= 12 && hour < 18) timeGreeting = "Buenas tardes";
+    else if (hour >= 18) timeGreeting = "Buenas noches";
+
+    if (user?.fullName) {
+      const firstName = user.fullName.split(" ")[0];
+      return `${timeGreeting}, ${firstName}`;
     }
 
-    if (role === 'elector') {
-      return `${timeGreeting}, Elector`;
-    } else if (role === 'info') {
-      return `${timeGreeting}, Ciudadano`;
-    } else if (role === 'mesa' || role === 'ambos') {
-      return `${timeGreeting}, Miembro de Mesa`;
-    }
-    
+    if (role === "mesa") return `${timeGreeting}, Miembro de mesa`;
+    if (role === "elector") return `${timeGreeting}, Elector`;
+
     return `${timeGreeting}, Ciudadano`;
   };
 
   const newsData: NewsItem[] = [
     {
-      id: '1',
-      title: 'Cronograma Electoral 2026 - Fechas Clave Confirmadas',
-      description: 'El JNE ha publicado el cronograma oficial con todas las fechas importantes del proceso electoral.',
-      date: 'Hace 2 horas',
+      id: "1",
+      title: "Cronograma Electoral 2026 - Fechas Clave Confirmadas",
+      description:
+        "El JNE ha publicado el cronograma oficial con todas las fechas importantes del proceso electoral.",
+      date: "Hace 2 horas",
       isNew: true,
-      category: 'Actualidad'
+      category: "Actualidad",
     },
     {
-      id: '2',
-      title: 'Capacitación Virtual para Miembros de Mesa',
-      description: 'ONPE anuncia nuevas fechas para la capacitación virtual obligatoria de miembros de mesa.',
-      date: 'Hace 5 horas',
-      category: 'Capacitación'
+      id: "2",
+      title: "Capacitación Virtual para Miembros de Mesa",
+      description:
+        "ONPE anuncia nuevas fechas para la capacitación virtual obligatoria de miembros de mesa.",
+      date: "Hace 5 horas",
+      category: "Capacitación",
     },
     {
-      id: '3',
-      title: 'Nuevos Protocolos de Bioseguridad para Locales de Votación',
-      description: 'Conoce las medidas de seguridad implementadas para garantizar votación segura.',
-      date: 'Ayer',
-      category: 'Protocolos'
-    }
+      id: "3",
+      title: "Nuevos Protocolos de Bioseguridad para Locales de Votación",
+      description:
+        "Conoce las medidas de seguridad implementadas para garantizar votación segura.",
+      date: "Ayer",
+      category: "Protocolos",
+    },
   ];
 
   if (loading) {
@@ -307,7 +340,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -318,12 +351,13 @@ export default function HomeScreen() {
               <Text style={styles.greeting}>{getGreeting()}</Text>
               <UserLocation location={location} />
             </View>
-            <RoleBadge role={role!} />
+
+            {hasPersonalData && user?.isMesaMember && <RoleBadge role="mesa" />}
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
+          {/* <TouchableOpacity style={styles.notificationButton}>
             <View style={styles.notificationDot} />
             <Bell size={24} color={COLORS.text.primary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Bandera Peruana decorativa */}
@@ -336,79 +370,107 @@ export default function HomeScreen() {
 
         {/* Accesos Rápidos */}
         <View style={styles.section}>
-          <SectionHeader 
-            title="Accesos Rápidos" 
+          <SectionHeader
+            title="Accesos Rápidos"
             actionText="Ver todos"
-            onAction={() => router.push('/(tabs)')}
+            onAction={() => router.push("/(tabs)")}
           />
           <View style={styles.quickAccessGrid}>
-            <QuickAccessCard
-              icon={Vote}
-              title="Mi Local"
-              subtitle="de Votación"
-              onPress={() => router.push('/(tabs)/voting')}
-              color={COLORS.primary}
-            />
+            {hasPersonalData ? (
+              // Usuario con DNI válido → acceso directo a su local
+              <QuickAccessCard
+                icon={Vote}
+                title="Mi Local"
+                subtitle="de Votación"
+                onPress={() => router.push("/(tabs)/voting")}
+                color={COLORS.primary}
+              />
+            ) : (
+              // Usuario informativo → invitamos a registrar su DNI
+              <QuickAccessCard
+                icon={Vote}
+                title="Registrar mi DNI"
+                subtitle="para ver mi local"
+                onPress={() => router.push("/(onboarding)/role")} // ajusta la ruta a tu pantalla de DNI
+                color={COLORS.primary}
+              />
+            )}
+
             <QuickAccessCard
               icon={FileText}
               title="Propuestas"
               subtitle="de Partidos"
-              onPress={() => router.push('/(tabs)/parties')}
+              onPress={() => router.push("/(tabs)/parties")}
               color={COLORS.secondary}
             />
             <QuickAccessCard
               icon={Users}
               title="Mi Rol"
               subtitle="en Elecciones"
-              onPress={() => router.push('/(tabs)/myrole')}
+              onPress={() => router.push("/(tabs)/myrole")}
               color={COLORS.status.warning}
             />
             <QuickAccessCard
               icon={Calendar}
               title="Calendario"
               subtitle="Electoral"
-              onPress={() => router.push('/(tabs)/calendar')}
+              onPress={() => router.push("/(tabs)/calendar")}
               color={COLORS.status.success}
             />
           </View>
         </View>
 
         {/* Más herramientas */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <SectionHeader title="Más Herramientas" />
           <View style={styles.toolsGrid}>
             <TouchableOpacity style={styles.toolCard}>
-              <View style={[styles.toolIcon, { backgroundColor: `${COLORS.primary}15` }]}>
+              <View
+                style={[
+                  styles.toolIcon,
+                  { backgroundColor: `${COLORS.primary}15` },
+                ]}
+              >
                 <Globe size={22} color={COLORS.primary} />
               </View>
               <Text style={styles.toolText}>Fuentes Oficiales</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.toolCard}>
-              <View style={[styles.toolIcon, { backgroundColor: `${COLORS.secondary}15` }]}>
+              <View
+                style={[
+                  styles.toolIcon,
+                  { backgroundColor: `${COLORS.secondary}15` },
+                ]}
+              >
                 <GraduationCap size={22} color={COLORS.secondary} />
               </View>
               <Text style={styles.toolText}>Tutorial App</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.toolCard}>
-              <View style={[styles.toolIcon, { backgroundColor: `${COLORS.status.success}15` }]}>
+              <View
+                style={[
+                  styles.toolIcon,
+                  { backgroundColor: `${COLORS.status.success}15` },
+                ]}
+              >
                 <Users size={22} color={COLORS.status.success} />
               </View>
               <Text style={styles.toolText}>Mi Perfil</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Noticias Recientes */}
         <View style={styles.section}>
-          <SectionHeader 
-            title="Últimas Noticias" 
+          <SectionHeader
+            title="Últimas Noticias"
             actionText="Ver todas"
-            onAction={() => console.log('Ver todas las noticias')}
+            onAction={() => console.log("Ver todas las noticias")}
           />
           <View style={styles.newsList}>
-            {newsData.map(news => (
+            {newsData.map((news) => (
               <NewsCard key={news.id} {...news} />
             ))}
           </View>
@@ -432,8 +494,8 @@ const styles = StyleSheet.create({
   // Loading
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: COLORS.background.light,
   },
   loadingSpinner: {
@@ -442,13 +504,13 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: COLORS.text.secondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   // Header
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     padding: SPACING.lg,
     paddingTop: SPACING.md,
     backgroundColor: COLORS.background.white,
@@ -456,7 +518,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 12,
@@ -474,7 +536,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     lineHeight: 34,
   },
@@ -483,13 +545,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: COLORS.background.light,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: SPACING.sm,
-    position: 'relative',
+    position: "relative",
   },
   notificationDot: {
-    position: 'absolute',
+    position: "absolute",
     top: 12,
     right: 12,
     width: 8,
@@ -500,24 +562,24 @@ const styles = StyleSheet.create({
   },
   // Location
   locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: SPACING.xs,
   },
   locationText: {
     fontSize: 14,
     color: COLORS.text.secondary,
     marginLeft: SPACING.xs,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   // Bandera
   flagStripe: {
-    flexDirection: 'row',
+    flexDirection: "row",
     height: 3,
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.md,
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   stripeSection: {
     flex: 1,
@@ -528,24 +590,24 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: SPACING.md,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
   },
   sectionAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   sectionActionText: {
     fontSize: 14,
     color: COLORS.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     marginRight: SPACING.xs,
   },
   // Countdown Card
@@ -568,8 +630,8 @@ const styles = StyleSheet.create({
     }),
   },
   countdownHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: SPACING.lg,
   },
   countdownIcon: {
@@ -577,8 +639,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: COLORS.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: SPACING.md,
   },
   countdownTitleContainer: {
@@ -586,7 +648,7 @@ const styles = StyleSheet.create({
   },
   countdownTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: 2,
   },
@@ -595,24 +657,24 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
   countdownContent: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: SPACING.lg,
   },
   countdownItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   countdownNumber: {
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.primary,
     lineHeight: 38,
   },
   countdownLabel: {
     fontSize: 12,
     color: COLORS.text.secondary,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 2,
   },
   countdownSeparator: {
@@ -620,14 +682,14 @@ const styles = StyleSheet.create({
   },
   countdownSeparatorText: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.light,
     marginBottom: 16,
   },
   countdownFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingTop: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.border.light,
@@ -635,7 +697,7 @@ const styles = StyleSheet.create({
   countdownDate: {
     fontSize: 14,
     color: COLORS.text.secondary,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: SPACING.sm,
   },
   // Accesos rápidos
@@ -643,8 +705,8 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   quickAccessCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: COLORS.background.white,
     padding: SPACING.md,
     borderRadius: 16,
@@ -652,7 +714,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border.light,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
@@ -666,8 +728,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: SPACING.md,
   },
   quickAccessContent: {
@@ -675,7 +737,7 @@ const styles = StyleSheet.create({
   },
   quickAccessTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: 2,
   },
@@ -688,8 +750,8 @@ const styles = StyleSheet.create({
   },
   // Tools Grid
   toolsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: SPACING.md,
   },
   toolCard: {
@@ -697,12 +759,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.white,
     padding: SPACING.md,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.border.light,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 6,
@@ -716,15 +778,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: SPACING.sm,
   },
   toolText: {
     fontSize: 12,
     color: COLORS.text.primary,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
   // Noticias
   newsList: {
@@ -738,7 +800,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border.light,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
         shadowRadius: 8,
@@ -749,14 +811,14 @@ const styles = StyleSheet.create({
     }),
   },
   newsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: SPACING.sm,
   },
   newsCategoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   newsBadge: {
@@ -769,21 +831,21 @@ const styles = StyleSheet.create({
   newsBadgeText: {
     color: COLORS.text.white,
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   newsCategory: {
     fontSize: 12,
     color: COLORS.text.secondary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   newsDate: {
     fontSize: 12,
     color: COLORS.text.light,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   newsTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.sm,
     lineHeight: 22,
@@ -795,13 +857,13 @@ const styles = StyleSheet.create({
   },
   // Badge
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: `${COLORS.primary}15`,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     borderWidth: 1,
     borderColor: `${COLORS.primary}30`,
   },
@@ -815,7 +877,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: COLORS.primary,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   // Bottom spacer
   bottomSpacer: {
