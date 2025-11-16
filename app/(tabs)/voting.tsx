@@ -1,6 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AlertCircle, Calendar, CheckCircle, ChevronRight, Clock, FileText, Fingerprint, MapPin, Shield, Target, Users } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  ChevronRight,
+  Clock,
+  FileText,
+  Fingerprint,
+  MapPin,
+  Shield,
+  Target,
+  Users,
+} from "lucide-react-native";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -9,33 +21,33 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Constantes de diseño
 const COLORS = {
-  primary: '#8B1538',
-  primaryDark: '#6A102B',
-  primaryLight: '#FEF2F2',
-  secondary: '#1E40AF',
-  accent: '#DC2626',
+  primary: "#8B1538",
+  primaryDark: "#6A102B",
+  primaryLight: "#FEF2F2",
+  secondary: "#1E40AF",
+  accent: "#DC2626",
   background: {
-    light: '#F8FAFC',
-    white: '#FFFFFF',
-    card: '#FFFFFF',
+    light: "#F8FAFC",
+    white: "#FFFFFF",
+    card: "#FFFFFF",
   },
   text: {
-    primary: '#1F2937',
-    secondary: '#6B7280',
-    light: '#9CA3AF',
-    white: '#FFFFFF'
+    primary: "#1F2937",
+    secondary: "#6B7280",
+    light: "#9CA3AF",
+    white: "#FFFFFF",
   },
   status: {
-    success: '#059669',
-    warning: '#D97706',
-    error: '#DC2626',
-    info: '#3B82F6'
-  }
+    success: "#059669",
+    warning: "#D97706",
+    error: "#DC2626",
+    info: "#3B82F6",
+  },
 } as const;
 
 const SPACING = {
@@ -44,10 +56,10 @@ const SPACING = {
   md: 16,
   lg: 20,
   xl: 24,
-  xxl: 32
+  xxl: 32,
 } as const;
 
-type RolUsuario = 'info' | 'elector' | 'mesa' | 'ambos';
+type RolUsuario = "info" | "elector" | "mesa" | "ambos";
 
 interface UbicacionUsuario {
   departamento: string;
@@ -75,19 +87,20 @@ const AlertCard = () => (
     <View style={styles.alertContent}>
       <Text style={styles.alertTitle}>Documentación Requerida</Text>
       <Text style={styles.alertText}>
-        Es obligatorio presentar tu DNI original y vigente. No se aceptan copias, 
-        documentos vencidos ni carnet de extranjería para ciudadanos peruanos.
+        Es obligatorio presentar tu DNI original y vigente. No se aceptan
+        copias, documentos vencidos ni carnet de extranjería para ciudadanos
+        peruanos.
       </Text>
     </View>
   </View>
 );
 
-const InfoCard = ({ 
-  icon: Icon, 
-  title, 
+const InfoCard = ({
+  icon: Icon,
+  title,
   children,
   actionText,
-  onAction 
+  onAction,
 }: {
   icon: React.ComponentType<any>;
   title: string;
@@ -108,9 +121,7 @@ const InfoCard = ({
         </TouchableOpacity>
       )}
     </View>
-    <View style={styles.infoBody}>
-      {children}
-    </View>
+    <View style={styles.infoBody}>{children}</View>
   </View>
 );
 
@@ -129,7 +140,7 @@ const ScheduleCard = () => (
       <Clock size={24} color={COLORS.primary} />
       <Text style={styles.scheduleTitle}>Horario Electoral</Text>
     </View>
-    
+
     <View style={styles.scheduleGrid}>
       <View style={styles.scheduleItem}>
         <View style={[styles.scheduleDot, styles.scheduleDotStart]} />
@@ -138,9 +149,9 @@ const ScheduleCard = () => (
           <Text style={styles.scheduleTime}>8:00 AM</Text>
         </View>
       </View>
-      
+
       <View style={styles.scheduleLine} />
-      
+
       <View style={styles.scheduleItem}>
         <View style={[styles.scheduleDot, styles.scheduleDotEnd]} />
         <View style={styles.scheduleContent}>
@@ -149,10 +160,11 @@ const ScheduleCard = () => (
         </View>
       </View>
     </View>
-    
+
     <View style={styles.scheduleNote}>
       <Text style={styles.scheduleNoteText}>
-        ⏰ <Text style={styles.scheduleNoteBold}>Recomendación:</Text> Vota temprano para evitar aglomeraciones
+        ⏰ <Text style={styles.scheduleNoteBold}>Recomendación:</Text> Vota
+        temprano para evitar aglomeraciones
       </Text>
     </View>
   </View>
@@ -174,11 +186,11 @@ const DateCard = () => (
   </View>
 );
 
-const VotingStep = ({ 
-  number, 
-  title, 
-  description, 
-  icon: Icon 
+const VotingStep = ({
+  number,
+  title,
+  description,
+  icon: Icon,
 }: {
   number: number;
   title: string;
@@ -206,21 +218,36 @@ const QuickActions = () => (
     <Text style={styles.quickActionsTitle}>Acciones Rápidas</Text>
     <View style={styles.quickActionsGrid}>
       <TouchableOpacity style={styles.quickAction}>
-        <View style={[styles.quickActionIcon, { backgroundColor: `${COLORS.primary}15` }]}>
+        <View
+          style={[
+            styles.quickActionIcon,
+            { backgroundColor: `${COLORS.primary}15` },
+          ]}
+        >
           <MapPin size={20} color={COLORS.primary} />
         </View>
         <Text style={styles.quickActionText}>Ver Mapa</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity style={styles.quickAction}>
-        <View style={[styles.quickActionIcon, { backgroundColor: `${COLORS.secondary}15` }]}>
+        <View
+          style={[
+            styles.quickActionIcon,
+            { backgroundColor: `${COLORS.secondary}15` },
+          ]}
+        >
           <FileText size={20} color={COLORS.secondary} />
         </View>
         <Text style={styles.quickActionText}>Mi Cédula</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity style={styles.quickAction}>
-        <View style={[styles.quickActionIcon, { backgroundColor: `${COLORS.status.success}15` }]}>
+        <View
+          style={[
+            styles.quickActionIcon,
+            { backgroundColor: `${COLORS.status.success}15` },
+          ]}
+        >
           <Shield size={20} color={COLORS.status.success} />
         </View>
         <Text style={styles.quickActionText}>Seguridad</Text>
@@ -233,7 +260,9 @@ const QuickActions = () => (
 export default function VotingScreen() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<RolUsuario | null>(null);
+
   const [location, setLocation] = useState<UbicacionUsuario | null>(null);
+  const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
     loadUserData();
@@ -241,20 +270,17 @@ export default function VotingScreen() {
 
   const loadUserData = async () => {
     try {
-      const [storedRole, storedLocation] = await Promise.all([
-        AsyncStorage.getItem('@role'),
-        AsyncStorage.getItem('@location'),
+      const [storedRole, storedLocation, storedUser] = await Promise.all([
+        AsyncStorage.getItem("@role"),
+        AsyncStorage.getItem("@location"),
+        AsyncStorage.getItem("@user"),
       ]);
 
-      if (storedRole) {
-        setRole(storedRole as RolUsuario);
-      }
-
-      if (storedLocation) {
-        setLocation(JSON.parse(storedLocation));
-      }
+      if (storedRole) setRole(storedRole as RolUsuario);
+      if (storedLocation) setLocation(JSON.parse(storedLocation));
+      if (storedUser) setUser(JSON.parse(storedUser));
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error("Error loading user data:", error);
     } finally {
       setLoading(false);
     }
@@ -264,24 +290,36 @@ export default function VotingScreen() {
     return <LoadingScreen />;
   }
 
+  const hasUser = !!user;
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Tu Centro de Votación</Text>
+            <Text style={styles.headerTitle}>
+              {user ? user.fullName : "Información Electoral"}
+            </Text>
+
             <Text style={styles.headerSubtitle}>
-              Toda la información que necesitas para ejercer tu derecho al voto
+              {user
+                ? "Datos oficiales de tu local y mesa electoral"
+                : "Consulta general de votación"}
             </Text>
           </View>
-          <View style={styles.headerBadge}>
-            <Target size={16} color={COLORS.text.white} />
-            <Text style={styles.headerBadgeText}>Elector Activo</Text>
-          </View>
+
+          {user && (
+            <View style={styles.headerBadge}>
+              <Target size={16} color={COLORS.text.white} />
+              <Text style={styles.headerBadgeText}>
+                {user.isMesaMember ? "Miembro de Mesa" : "Elector"}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Alerta importante */}
@@ -296,32 +334,45 @@ export default function VotingScreen() {
 
         {/* Información del local */}
         <View style={styles.section}>
-          <InfoCard 
-            icon={MapPin} 
+          <InfoCard
+            icon={MapPin}
             title="Local de Votación"
             actionText="Ver detalles"
-            onAction={() => console.log('Ver detalles del local')}
+            onAction={() => console.log("Ver detalles del local")}
           >
             <View style={styles.infoGrid}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Institución Educativa</Text>
-                <Text style={styles.infoValue}>I.E. José Carlos Mariátegui</Text>
+                <Text style={styles.infoValue}>
+                  {user?.votingLocation.placeName}
+                </Text>
               </View>
-              
+
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Dirección Completa</Text>
                 <Text style={styles.infoValue}>
-                  Av. Los Héroes 245, {location?.distrito || 'Tu distrito'}, {location?.provincia || 'Tu provincia'}
+                  {user?.votingLocation.address}
                 </Text>
               </View>
-              
+
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Referencia</Text>
+                <Text style={styles.infoLabel}>
+                  Distrito / Provincia / Departamento
+                </Text>
                 <Text style={styles.infoValue}>
-                  A 2 cuadras del Mercado Central, frente al Parque Principal
+                  {user?.votingLocation.district},{" "}
+                  {user?.votingLocation.province},{" "}
+                  {user?.votingLocation.department}
                 </Text>
               </View>
-              
+
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Coordenadas</Text>
+                <Text style={styles.infoValue}>
+                  {user?.votingLocation.lat}, {user?.votingLocation.lng}
+                </Text>
+              </View>
+
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Tipo de Local</Text>
                 <View style={styles.infoTag}>
@@ -334,25 +385,25 @@ export default function VotingScreen() {
 
         {/* Mesa asignada */}
         <View style={styles.section}>
-          <InfoCard 
-            icon={Users} 
+          <InfoCard
+            icon={Users}
             title="Tu Mesa Electoral"
             actionText="Miembros"
-            onAction={() => console.log('Ver miembros de mesa')}
+            onAction={() => console.log("Ver miembros de mesa")}
           >
-            <MesaNumber numero="012345" />
-            
+            <MesaNumber numero={user?.tableNumber ?? "----"} />
+
             <View style={styles.infoGrid}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Ubicación en el Local</Text>
-                <Text style={styles.infoValue}>Segundo Piso - Aula 203</Text>
+                <Text style={styles.infoValue}>Aula 8273</Text>
               </View>
-              
+
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Electores Registrados</Text>
                 <Text style={styles.infoValue}>300 ciudadanos</Text>
               </View>
-              
+
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Estado de la Mesa</Text>
                 <View style={[styles.infoTag, styles.infoTagActive]}>
@@ -383,7 +434,7 @@ export default function VotingScreen() {
               Sigue estos pasos para ejercer tu voto correctamente
             </Text>
           </View>
-          
+
           <View style={styles.stepsGrid}>
             <VotingStep
               number={1}
@@ -391,35 +442,35 @@ export default function VotingScreen() {
               title="Presentación en el Local"
               description="Llega con tu DNI original al local asignado dentro del horario electoral"
             />
-            
+
             <VotingStep
               number={2}
               icon={Target}
               title="Ubicación de tu Mesa"
               description="Encuentra tu mesa electoral usando los paneles informativos del local"
             />
-            
+
             <VotingStep
               number={3}
               icon={Fingerprint}
               title="Verificación de Identidad"
               description="Entrega tu DNI al miembro de mesa para confirmar tu identidad en el padrón"
             />
-            
+
             <VotingStep
               number={4}
               icon={FileText}
               title="Recepción de Cédula"
               description="Recibe la cédula de votación oficial para tu circunscripción electoral"
             />
-            
+
             <VotingStep
               number={5}
               icon={Shield}
               title="Voto en Cámara Secreta"
               description="Marca tu preferencia con tranquilidad en el espacio reservado para el voto secreto"
             />
-            
+
             <VotingStep
               number={6}
               icon={CheckCircle}
@@ -432,9 +483,9 @@ export default function VotingScreen() {
         {/* Información adicional */}
         <View style={styles.section}>
           <View style={styles.finalNote}>
-            <Text style={styles.finalNoteTitle}>✅ Tu voto es importante</Text>
+            <Text style={styles.finalNoteTitle}>Tu voto es importante</Text>
             <Text style={styles.finalNoteText}>
-              Recuerda que el voto es personal, libre, secreto y obligatorio. 
+              Recuerda que el voto es personal, libre, secreto y obligatorio.
               Ejerce tu derecho democrático con responsabilidad.
             </Text>
           </View>
@@ -457,8 +508,8 @@ const styles = StyleSheet.create({
   // Loading
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: COLORS.background.light,
   },
   loadingSpinner: {
@@ -467,7 +518,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: COLORS.text.secondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   // Header
   header: {
@@ -476,12 +527,12 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.lg,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 12,
@@ -496,7 +547,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
@@ -506,8 +557,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   headerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
@@ -516,7 +567,7 @@ const styles = StyleSheet.create({
   },
   headerBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.white,
     marginLeft: SPACING.xs,
   },
@@ -530,18 +581,18 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
   sectionSubtitle: {
     fontSize: 14,
     color: COLORS.text.secondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   // Alert Card
   alertCard: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: COLORS.primaryLight,
     padding: SPACING.lg,
     borderRadius: 16,
@@ -567,7 +618,7 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
@@ -580,10 +631,10 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: COLORS.background.white,
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
         shadowRadius: 12,
@@ -594,8 +645,8 @@ const styles = StyleSheet.create({
     }),
   },
   infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: SPACING.lg,
     backgroundColor: COLORS.background.light,
     borderBottomWidth: 1,
@@ -606,17 +657,17 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     flex: 1,
   },
   infoAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   infoActionText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.primary,
     marginRight: SPACING.xs,
   },
@@ -631,14 +682,14 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text.secondary,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: COLORS.text.primary,
     lineHeight: 22,
   },
@@ -647,19 +698,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: 8,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   infoTagActive: {
-    backgroundColor: COLORS.status.success + '20',
+    backgroundColor: COLORS.status.success + "20",
   },
   infoTagText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
   },
   // Mesa Number
   mesaNumberContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: SPACING.lg,
   },
   mesaNumberBackground: {
@@ -667,21 +718,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.lg,
     borderRadius: 20,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
     borderColor: COLORS.primary,
-    width: '100%',
+    width: "100%",
   },
   mesaNumberLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.primary,
     marginBottom: SPACING.sm,
     letterSpacing: 1,
   },
   mesaNumber: {
     fontSize: 48,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.primary,
     lineHeight: 52,
   },
@@ -692,7 +743,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
@@ -703,23 +754,23 @@ const styles = StyleSheet.create({
     }),
   },
   scheduleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: SPACING.lg,
   },
   scheduleTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginLeft: SPACING.sm,
   },
   scheduleGrid: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   scheduleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
   },
   scheduleDot: {
     width: 16,
@@ -738,13 +789,13 @@ const styles = StyleSheet.create({
   },
   scheduleLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
   },
   scheduleTime: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
   },
   scheduleLine: {
@@ -765,7 +816,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   scheduleNoteBold: {
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text.primary,
   },
   // Date Card
@@ -773,11 +824,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.white,
     padding: SPACING.lg,
     borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
@@ -795,14 +846,14 @@ const styles = StyleSheet.create({
   },
   dateDay: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.primary,
     marginBottom: SPACING.xs,
     letterSpacing: 1,
   },
   dateNumber: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
@@ -818,7 +869,7 @@ const styles = StyleSheet.create({
   },
   dateBadgeText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.text.white,
     letterSpacing: 1,
   },
@@ -837,10 +888,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.white,
     padding: SPACING.lg,
     borderRadius: 16,
-    flexDirection: 'row',
+    flexDirection: "row",
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
         shadowRadius: 6,
@@ -858,13 +909,13 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: SPACING.sm,
   },
   stepNumberText: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.text.white,
   },
   stepIcon: {
@@ -872,15 +923,15 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: COLORS.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   stepContent: {
     flex: 1,
   },
   stepTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
@@ -895,12 +946,12 @@ const styles = StyleSheet.create({
   },
   quickActionsTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   quickActionsGrid: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.md,
   },
   quickAction: {
@@ -908,10 +959,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.white,
     padding: SPACING.md,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
         shadowRadius: 6,
@@ -925,19 +976,19 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: SPACING.sm,
   },
   quickActionText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text.primary,
-    textAlign: 'center',
+    textAlign: "center",
   },
   // Final Note
   finalNote: {
-    backgroundColor: COLORS.status.success + '10',
+    backgroundColor: COLORS.status.success + "10",
     padding: SPACING.lg,
     borderRadius: 16,
     borderLeftWidth: 4,
@@ -945,7 +996,7 @@ const styles = StyleSheet.create({
   },
   finalNoteTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
