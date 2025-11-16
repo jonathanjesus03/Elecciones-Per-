@@ -77,6 +77,140 @@ interface NewsItem {
   category?: string;
 }
 
+// Componente Countdown actualizado con tiempo real
+const CountdownCard = () => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      // Fecha de las elecciones: 11 de Abril de 2026, 8:00 AM (hora de Perú)
+      const electionDate = new Date('2026-04-11T08:00:00-05:00'); // UTC-5 para Perú
+      const now = new Date();
+      const difference = electionDate.getTime() - now.getTime();
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000)
+        });
+      } else {
+        // Si ya pasó la fecha, mostrar ceros
+        setTimeLeft({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0
+        });
+      }
+    };
+
+    // Calcular inmediatamente
+    calculateTimeLeft();
+
+    // Actualizar cada segundo
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Función para formatear números con ceros a la izquierda
+  const formatNumber = (num: number) => {
+    return num < 10 ? `0${num}` : num.toString();
+  };
+
+  // Determinar el mensaje según el tiempo restante
+  const getCountdownMessage = () => {
+    const totalDays = timeLeft.days;
+    
+    if (totalDays > 30) {
+      return "Próximas elecciones generales";
+    } else if (totalDays > 7) {
+      return "¡Faltan pocas semanas!";
+    } else if (totalDays > 1) {
+      return "¡La cuenta regresiva final!";
+    } else if (totalDays === 1) {
+      return "¡Mañana son las elecciones!";
+    } else if (timeLeft.hours > 0) {
+      return "¡Hoy es el gran día!";
+    } else {
+      return "¡Las elecciones están en curso!";
+    }
+  };
+
+  return (
+    <View style={styles.countdownCard}>
+      <View style={styles.countdownHeader}>
+        <View style={styles.countdownIcon}>
+          <Vote size={24} color={COLORS.primary} />
+        </View>
+        <View style={styles.countdownTitleContainer}>
+          <Text style={styles.countdownTitle}>Elecciones 2026</Text>
+          <Text style={styles.countdownSubtitle}>
+            {getCountdownMessage()}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.countdownContent}>
+        <View style={styles.countdownItem}>
+          <Text style={styles.countdownNumber}>{formatNumber(timeLeft.days)}</Text>
+          <Text style={styles.countdownLabel}>días</Text>
+        </View>
+        <View style={styles.countdownSeparator}>
+          <Text style={styles.countdownSeparatorText}>:</Text>
+        </View>
+        <View style={styles.countdownItem}>
+          <Text style={styles.countdownNumber}>{formatNumber(timeLeft.hours)}</Text>
+          <Text style={styles.countdownLabel}>horas</Text>
+        </View>
+        <View style={styles.countdownSeparator}>
+          <Text style={styles.countdownSeparatorText}>:</Text>
+        </View>
+        <View style={styles.countdownItem}>
+          <Text style={styles.countdownNumber}>{formatNumber(timeLeft.minutes)}</Text>
+          <Text style={styles.countdownLabel}>min</Text>
+        </View>
+        <View style={styles.countdownSeparator}>
+          <Text style={styles.countdownSeparatorText}>:</Text>
+        </View>
+        <View style={styles.countdownItem}>
+          <Text style={styles.countdownNumber}>{formatNumber(timeLeft.seconds)}</Text>
+          <Text style={styles.countdownLabel}>seg</Text>
+        </View>
+      </View>
+
+      <View style={styles.countdownFooter}>
+        <Calendar size={16} color={COLORS.text.secondary} />
+        <Text style={styles.countdownDate}>11 de Abril, 2026 - 8:00 AM</Text>
+      </View>
+
+      {/* Barra de progreso opcional */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <View 
+            style={[
+              styles.progressFill,
+              { 
+                width: `${Math.max(0, Math.min(100, 100 - (timeLeft.days / 365 * 100)))}%` 
+              }
+            ]} 
+          />
+        </View>
+        <Text style={styles.progressText}>
+          {Math.max(0, Math.min(100, 100 - (timeLeft.days / 365 * 100))).toFixed(1)}% del tiempo transcurrido
+        </Text>
+      </View>
+    </View>
+  );
+};
+
 // Componentes reutilizables
 const LoadingScreen = () => (
   <SafeAreaView style={styles.container}>
@@ -180,48 +314,6 @@ const NewsCard = ({
     </View>
     <Text style={styles.newsTitle}>{title}</Text>
     <Text style={styles.newsDescription}>{description}</Text>
-  </View>
-);
-
-const CountdownCard = () => (
-  <View style={styles.countdownCard}>
-    <View style={styles.countdownHeader}>
-      <View style={styles.countdownIcon}>
-        <Vote size={24} color={COLORS.primary} />
-      </View>
-      <View style={styles.countdownTitleContainer}>
-        <Text style={styles.countdownTitle}>Elecciones 2026</Text>
-        <Text style={styles.countdownSubtitle}>
-          Próximas elecciones generales
-        </Text>
-      </View>
-    </View>
-
-    <View style={styles.countdownContent}>
-      <View style={styles.countdownItem}>
-        <Text style={styles.countdownNumber}>27</Text>
-        <Text style={styles.countdownLabel}>días</Text>
-      </View>
-      <View style={styles.countdownSeparator}>
-        <Text style={styles.countdownSeparatorText}>:</Text>
-      </View>
-      <View style={styles.countdownItem}>
-        <Text style={styles.countdownNumber}>14</Text>
-        <Text style={styles.countdownLabel}>horas</Text>
-      </View>
-      <View style={styles.countdownSeparator}>
-        <Text style={styles.countdownSeparatorText}>:</Text>
-      </View>
-      <View style={styles.countdownItem}>
-        <Text style={styles.countdownNumber}>32</Text>
-        <Text style={styles.countdownLabel}>min</Text>
-      </View>
-    </View>
-
-    <View style={styles.countdownFooter}>
-      <Calendar size={16} color={COLORS.text.secondary} />
-      <Text style={styles.countdownDate}>11 de Abril, 2026</Text>
-    </View>
   </View>
 );
 
@@ -354,10 +446,6 @@ export default function HomeScreen() {
 
             {hasPersonalData && user?.isMesaMember && <RoleBadge role="mesa" />}
           </View>
-          {/* <TouchableOpacity style={styles.notificationButton}>
-            <View style={styles.notificationDot} />
-            <Bell size={24} color={COLORS.text.primary} />
-          </TouchableOpacity> */}
         </View>
 
         {/* Bandera Peruana decorativa */}
@@ -391,7 +479,7 @@ export default function HomeScreen() {
                 icon={Vote}
                 title="Registrar mi DNI"
                 subtitle="para ver mi local"
-                onPress={() => router.push("/(onboarding)/role")} // ajusta la ruta a tu pantalla de DNI
+                onPress={() => router.push("/(onboarding)/role")}
                 color={COLORS.primary}
               />
             )}
@@ -419,48 +507,6 @@ export default function HomeScreen() {
             />
           </View>
         </View>
-
-        {/* Más herramientas */}
-        {/* <View style={styles.section}>
-          <SectionHeader title="Más Herramientas" />
-          <View style={styles.toolsGrid}>
-            <TouchableOpacity style={styles.toolCard}>
-              <View
-                style={[
-                  styles.toolIcon,
-                  { backgroundColor: `${COLORS.primary}15` },
-                ]}
-              >
-                <Globe size={22} color={COLORS.primary} />
-              </View>
-              <Text style={styles.toolText}>Fuentes Oficiales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.toolCard}>
-              <View
-                style={[
-                  styles.toolIcon,
-                  { backgroundColor: `${COLORS.secondary}15` },
-                ]}
-              >
-                <GraduationCap size={22} color={COLORS.secondary} />
-              </View>
-              <Text style={styles.toolText}>Tutorial App</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.toolCard}>
-              <View
-                style={[
-                  styles.toolIcon,
-                  { backgroundColor: `${COLORS.status.success}15` },
-                ]}
-              >
-                <Users size={22} color={COLORS.status.success} />
-              </View>
-              <Text style={styles.toolText}>Mi Perfil</Text>
-            </TouchableOpacity>
-          </View>
-        </View> */}
 
         {/* Noticias Recientes */}
         <View style={styles.section}>
@@ -664,27 +710,28 @@ const styles = StyleSheet.create({
   },
   countdownItem: {
     alignItems: "center",
+    minWidth: 50,
   },
   countdownNumber: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "800",
     color: COLORS.primary,
-    lineHeight: 38,
+    lineHeight: 30,
   },
   countdownLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.text.secondary,
     fontWeight: "600",
     marginTop: 2,
   },
   countdownSeparator: {
-    marginHorizontal: SPACING.sm,
+    marginHorizontal: SPACING.xs,
   },
   countdownSeparatorText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "700",
     color: COLORS.text.light,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   countdownFooter: {
     flexDirection: "row",
@@ -693,12 +740,35 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.border.light,
+    marginBottom: SPACING.md,
   },
   countdownDate: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.text.secondary,
     fontWeight: "600",
     marginLeft: SPACING.sm,
+  },
+  // Progress Bar
+  progressContainer: {
+    marginTop: SPACING.md,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: COLORS.border.light,
+    borderRadius: 3,
+    overflow: "hidden",
+    marginBottom: SPACING.xs,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    textAlign: "center",
+    fontWeight: "500",
   },
   // Accesos rápidos
   quickAccessGrid: {

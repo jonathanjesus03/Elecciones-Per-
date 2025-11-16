@@ -11,6 +11,10 @@ import {
   Shield,
   Target,
   Users,
+  X,
+  BookOpen,
+  AlertTriangle,
+  Info,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
@@ -21,8 +25,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 // Constantes de diseño
 const COLORS = {
@@ -66,6 +73,70 @@ interface UbicacionUsuario {
   provincia: string;
   distrito: string;
 }
+
+// Componente Modal para información
+const InfoModal = ({ 
+  visible, 
+  onClose, 
+  title, 
+  icon: Icon, 
+  children 
+}: { 
+  visible: boolean; 
+  onClose: () => void; 
+  title: string; 
+  icon: React.ComponentType<any>;
+  children: React.ReactNode;
+}) => (
+  <Modal
+    visible={visible}
+    animationType="slide"
+    presentationStyle="pageSheet"
+    onRequestClose={onClose}
+  >
+    <SafeAreaView style={styles.modalContainer}>
+      <View style={styles.modalHeader}>
+        <View style={styles.modalTitleContainer}>
+          <View style={styles.modalIcon}>
+            <Icon size={24} color={COLORS.primary} />
+          </View>
+          <Text style={styles.modalTitle}>{title}</Text>
+        </View>
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <X size={24} color={COLORS.text.secondary} />
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView 
+        style={styles.modalContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+    </SafeAreaView>
+  </Modal>
+);
+
+// Componente de Ítem de Información
+const InfoItem = ({ 
+  icon: Icon, 
+  title, 
+  description 
+}: { 
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+}) => (
+  <View style={styles.infoItemModal}>
+    <View style={styles.infoItemIcon}>
+      <Icon size={20} color={COLORS.primary} />
+    </View>
+    <View style={styles.infoItemContent}>
+      <Text style={styles.infoItemTitle}>{title}</Text>
+      <Text style={styles.infoItemDescription}>{description}</Text>
+    </View>
+  </View>
+);
 
 // Componentes reutilizables
 const LoadingScreen = () => (
@@ -213,23 +284,19 @@ const VotingStep = ({
   </View>
 );
 
-const QuickActions = () => (
+const QuickActions = ({ 
+  onCedulaPress, 
+  onSeguridadPress, 
+  onMarcoLegalPress 
+}: { 
+  onCedulaPress: () => void;
+  onSeguridadPress: () => void;
+  onMarcoLegalPress: () => void;
+}) => (
   <View style={styles.quickActions}>
     <Text style={styles.quickActionsTitle}>Acciones Rápidas</Text>
     <View style={styles.quickActionsGrid}>
-      <TouchableOpacity style={styles.quickAction}>
-        <View
-          style={[
-            styles.quickActionIcon,
-            { backgroundColor: `${COLORS.primary}15` },
-          ]}
-        >
-          <MapPin size={20} color={COLORS.primary} />
-        </View>
-        <Text style={styles.quickActionText}>Ver Mapa</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.quickAction}>
+      <TouchableOpacity style={styles.quickAction} onPress={onCedulaPress}>
         <View
           style={[
             styles.quickActionIcon,
@@ -241,7 +308,7 @@ const QuickActions = () => (
         <Text style={styles.quickActionText}>Mi Cédula</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.quickAction}>
+      <TouchableOpacity style={styles.quickAction} onPress={onSeguridadPress}>
         <View
           style={[
             styles.quickActionIcon,
@@ -252,6 +319,18 @@ const QuickActions = () => (
         </View>
         <Text style={styles.quickActionText}>Seguridad</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.quickAction} onPress={onMarcoLegalPress}>
+        <View
+          style={[
+            styles.quickActionIcon,
+            { backgroundColor: `${COLORS.status.warning}15` },
+          ]}
+        >
+          <BookOpen size={20} color={COLORS.status.warning} />
+        </View>
+        <Text style={styles.quickActionText}>Marco Legal</Text>
+      </TouchableOpacity>
     </View>
   </View>
 );
@@ -260,9 +339,13 @@ const QuickActions = () => (
 export default function VotingScreen() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<RolUsuario | null>(null);
-
   const [location, setLocation] = useState<UbicacionUsuario | null>(null);
   const [user, setUser] = useState<any | null>(null);
+  
+  // Estados para los modales
+  const [cedulaModalVisible, setCedulaModalVisible] = useState(false);
+  const [seguridadModalVisible, setSeguridadModalVisible] = useState(false);
+  const [marcoLegalModalVisible, setMarcoLegalModalVisible] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -291,6 +374,10 @@ export default function VotingScreen() {
   }
 
   const hasUser = !!user;
+  
+  // Obtener coordenadas del usuario
+  const latitude = user?.votingLocation?.lat ? parseFloat(user.votingLocation.lat) : -12.0464;
+  const longitude = user?.votingLocation?.lng ? parseFloat(user.votingLocation.lng) : -77.0428;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -329,10 +416,14 @@ export default function VotingScreen() {
 
         {/* Acciones rápidas */}
         <View style={styles.section}>
-          <QuickActions />
+          <QuickActions 
+            onCedulaPress={() => setCedulaModalVisible(true)}
+            onSeguridadPress={() => setSeguridadModalVisible(true)}
+            onMarcoLegalPress={() => setMarcoLegalModalVisible(true)}
+          />
         </View>
 
-        {/* Información del local */}
+        {/* Resto del contenido existente */}
         <View style={styles.section}>
           <InfoCard
             icon={MapPin}
@@ -340,6 +431,29 @@ export default function VotingScreen() {
             actionText="Ver detalles"
             onAction={() => console.log("Ver detalles del local")}
           >
+            <View style={styles.mapContainer}>
+              <MapView
+                provider={PROVIDER_GOOGLE}
+                style={styles.map}
+                initialRegion={{
+                  latitude: latitude,
+                  longitude: longitude,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                }}
+              >
+                <Marker
+                  coordinate={{
+                    latitude: latitude,
+                    longitude: longitude,
+                  }}
+                  title={user?.votingLocation.placeName}
+                  description={user?.votingLocation.address}
+                  pinColor={COLORS.primary}
+                />
+              </MapView>
+            </View>
+
             <View style={styles.infoGrid}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Institución Educativa</Text>
@@ -493,6 +607,151 @@ export default function VotingScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Modal Mi Cédula */}
+      <InfoModal
+        visible={cedulaModalVisible}
+        onClose={() => setCedulaModalVisible(false)}
+        title="Mi Cédula de Sufragio"
+        icon={FileText}
+      >
+        <View style={styles.modalSection}>
+          <Text style={styles.modalSectionTitle}>Indicaciones de la Cédula de Sufragio - Perú 2026</Text>
+          
+          <InfoItem
+            icon={Info}
+            title="Estructura de la Cédula"
+            description="La cédula electoral contiene los candidatos presidenciales, al congreso, y representantes al parlamento andino, organizados por partidos políticos con sus respectivos logos y números."
+          />
+
+          <InfoItem
+            icon={CheckCircle}
+            title="Forma Correcta de Votar"
+            description="Marca con una 'X' o un '✓' en el recuadro correspondiente a tu preferencia. Usa el lapicero proporcionado en el local de votación."
+          />
+
+          <InfoItem
+            icon={AlertTriangle}
+            title="Precauciones Importantes"
+            description="No firmes la cédula, no escribas mensajes, no votes por más de una opción en la misma categoría. Esto anularía tu voto."
+          />
+
+          <InfoItem
+            icon={Shield}
+            title="Voto Válido"
+            description="Tu voto es válido si la marca está claramente dentro de un solo recuadro y es identifiable tu intención de voto."
+          />
+
+          <View style={styles.noteBox}>
+            <Text style={styles.noteTitle}>📝 Recuerda:</Text>
+            <Text style={styles.noteText}>
+              • La cédula es un documento oficial{"\n"}
+              • Debes doblarla antes de depositarla en la urna{"\n"}
+              • El voto es secreto y personal{"\n"}
+              • Conserva la tranquilidad durante el proceso
+            </Text>
+          </View>
+        </View>
+      </InfoModal>
+
+      {/* Modal Seguridad */}
+      <InfoModal
+        visible={seguridadModalVisible}
+        onClose={() => setSeguridadModalVisible(false)}
+        title="Recomendaciones de Seguridad"
+        icon={Shield}
+      >
+        <View style={styles.modalSection}>
+          <Text style={styles.modalSectionTitle}>Medidas de Seguridad Electoral 2026</Text>
+          
+          <InfoItem
+            icon={AlertTriangle}
+            title="Seguridad Personal"
+            description="Acude a votar acompañado si es posible, evita llevar objetos de valor, mantén tu DNI en un lugar seguro y permanece alerta en filas y aglomeraciones."
+          />
+
+          <InfoItem
+            icon={Users}
+            title="Protocolo Sanitario"
+            description="Uso opcional de mascarilla, gel antibacterial disponible en el local, mantén distancia prudencial y sigue las indicaciones del personal electoral."
+          />
+
+          <InfoItem
+            icon={Shield}
+            title="Seguridad Digital"
+            description="No compartas fotos de tu cédula de votación en redes sociales, desconfía de mensajes sospechosos sobre el proceso electoral y verifica información solo en fuentes oficiales."
+          />
+
+          <InfoItem
+            icon={MapPin}
+            title="En el Local de Votación"
+            description="Respeta las áreas delimitadas, sigue las indicaciones de la Policía Nacional y miembros de mesa, y reporta cualquier situación sospechosa al personal autorizado."
+          />
+
+          <View style={[styles.noteBox, styles.securityNote]}>
+            <Text style={styles.noteTitle}>🚨 Canales de Emergencia:</Text>
+            <Text style={styles.noteText}>
+              • Policía Nacional: 105{"\n"}
+              • Serenazgo: Llama a tu municipalidad{"\n"}
+              • ONPE: 0800-1-7070{"\n"}
+              • JNE: (01) 311-1700
+            </Text>
+          </View>
+        </View>
+      </InfoModal>
+
+      {/* Modal Marco Legal */}
+      <InfoModal
+        visible={marcoLegalModalVisible}
+        onClose={() => setMarcoLegalModalVisible(false)}
+        title="Marco Legal Electoral"
+        icon={BookOpen}
+      >
+        <View style={styles.modalSection}>
+          <Text style={styles.modalSectionTitle}>Base Legal del Proceso Electoral 2026</Text>
+          
+          <InfoItem
+            icon={FileText}
+            title="Constitución Política del Perú"
+            description="Artículo 31: El voto es personal, igual, libre, secreto y obligatorio hasta los 70 años. Es facultativo para mayores de 70 años."
+          />
+
+          <InfoItem
+            icon={FileText}
+            title="Ley Orgánica de Elecciones"
+            description="Ley N° 26859: Establece el proceso electoral, organización del JNE, ONPE, RENIEC, y regula el padrón electoral y actos electorales."
+          />
+
+          <InfoItem
+            icon={FileText}
+            title="Código Penal - Delitos Electorales"
+            description="Artículos 346-358: Sanciona suplantación de identidad, compra de votos, coacción al elector, alteración de resultados y otros delitos electorales."
+          />
+
+          <InfoItem
+            icon={FileText}
+            title="Ley de Organizaciones Políticas"
+            description="Ley N° 28094: Regula la constitución, organización y funcionamiento de los partidos políticos en el Perú."
+          />
+
+          <InfoItem
+            icon={FileText}
+            title="Ley de Transparencia y Acceso a la Información"
+            description="Ley N° 27806: Garantiza el acceso ciudadano a la información pública sobre el proceso electoral."
+          />
+
+          <View style={[styles.noteBox, styles.legalNote]}>
+            <Text style={styles.noteTitle}>⚖️ Derechos del Elector:</Text>
+            <Text style={styles.noteText}>
+              • Ejercer sufragio libremente{"\n"}
+              • Acceder a información veraz{"\n"}
+              • Presentar reclamos y quejas{"\n"}
+              • Fiscalizar el proceso electoral{"\n"}
+              • Voto preferencial y cruzado
+            </Text>
+          </View>
+        </View>
+      </InfoModal>
     </SafeAreaView>
   );
 }
@@ -673,6 +932,18 @@ const styles = StyleSheet.create({
   },
   infoBody: {
     padding: SPACING.lg,
+  },
+  // Estilos del Mapa
+  mapContainer: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: SPACING.lg,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
   },
   infoGrid: {
     gap: SPACING.md,
@@ -1008,5 +1279,129 @@ const styles = StyleSheet.create({
   // Bottom Spacer
   bottomSpacer: {
     height: SPACING.xxl,
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background.light,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: SPACING.lg,
+    backgroundColor: COLORS.background.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.background.light,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  modalTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  modalIcon: {
+    marginRight: SPACING.sm,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.text.primary,
+  },
+  closeButton: {
+    padding: SPACING.xs,
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalSection: {
+    padding: SPACING.xl,
+  },
+  modalSectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.text.primary,
+    marginBottom: SPACING.lg,
+    textAlign: "center",
+  },
+  // Info Item Modal
+  infoItemModal: {
+    flexDirection: "row",
+    backgroundColor: COLORS.background.white,
+    padding: SPACING.lg,
+    borderRadius: 12,
+    marginBottom: SPACING.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  infoItemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: SPACING.md,
+  },
+  infoItemContent: {
+    flex: 1,
+  },
+  infoItemTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+  },
+  infoItemDescription: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    lineHeight: 20,
+  },
+  // Note Box
+  noteBox: {
+    backgroundColor: COLORS.primaryLight,
+    padding: SPACING.lg,
+    borderRadius: 12,
+    marginTop: SPACING.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+  },
+  securityNote: {
+    backgroundColor: `${COLORS.status.success}10`,
+    borderLeftColor: COLORS.status.success,
+  },
+  legalNote: {
+    backgroundColor: `${COLORS.status.warning}10`,
+    borderLeftColor: COLORS.status.warning,
+  },
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
+  },
+  noteText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    lineHeight: 20,
   },
 });

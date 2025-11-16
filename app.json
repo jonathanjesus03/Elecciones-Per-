@@ -14,7 +14,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyBZueQi20-o2lsQTZ8jasHvnUp3_GUiBls"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBZueQi20-o2lsQTZ8jasHvnUp3_GUiBls"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

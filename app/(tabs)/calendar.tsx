@@ -1,5 +1,5 @@
 import { AlertCircle, Calendar, CheckCircle2, Clock, ChevronRight, Target } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Platform, 
   ScrollView, 
@@ -60,83 +60,209 @@ interface EventoElectoral {
   diasRestantes?: number;
 }
 
-const eventos: EventoElectoral[] = [
-  {
-    id: 1,
-    fecha: '15 Enero 2026',
-    titulo: 'Inicio del Proceso Electoral',
-    descripcion: 'Convocatoria oficial a elecciones generales y publicación de cronograma',
-    estado: 'completado',
-    categoria: 'Administrativo',
-    diasRestantes: -45
-  },
-  {
-    id: 2,
-    fecha: '20 Febrero 2026',
-    titulo: 'Inscripción de Candidatos',
-    descripcion: 'Cierre de inscripción de listas electorales y verificación de requisitos',
-    estado: 'completado',
-    categoria: 'Candidatos',
-    diasRestantes: -20
-  },
-  {
-    id: 3,
-    fecha: '10 Marzo 2026',
-    titulo: 'Inicio de Campaña Electoral',
-    descripcion: 'Arranque oficial de campañas políticas en medios y territorios',
-    estado: 'proximo',
-    categoria: 'Campaña',
-    diasRestantes: 5
-  },
-  {
-    id: 4,
-    fecha: '8 Abril 2026',
-    titulo: 'Cierre de Campaña Electoral',
-    descripcion: 'Fin de propaganda electoral y veda de medios',
-    estado: 'pendiente',
-    categoria: 'Campaña',
-    diasRestantes: 34
-  },
-  {
-    id: 5,
-    fecha: '11 Abril 2026',
-    titulo: 'Día de Elecciones Generales',
-    descripcion: 'Votación para Presidente, Vicepresidentes y Congresistas de la República',
-    estado: 'importante',
-    categoria: 'Votación',
-    diasRestantes: 37
-  },
-  {
-    id: 6,
-    fecha: '13 Abril 2026',
-    titulo: 'Resultados Oficiales Preliminares',
-    descripcion: 'Proclamación de resultados preliminares por la ONPE',
-    estado: 'pendiente',
-    categoria: 'Resultados',
-    diasRestantes: 39
-  },
-];
+// Componente CountdownCard actualizado con tiempo real
+const CountdownCard = () => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  const [progressPercentage, setProgressPercentage] = useState(0);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      // Fecha de las elecciones: 11 de Abril de 2026, 8:00 AM (hora de Perú)
+      const electionDate = new Date('2026-04-11T08:00:00-05:00'); // UTC-5 para Perú
+      const now = new Date();
+      const difference = electionDate.getTime() - now.getTime();
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        setTimeLeft({ days, hours, minutes, seconds });
+
+        // Calcular porcentaje de progreso (considerando un año completo antes de las elecciones)
+        const totalDaysInYear = 365;
+        const daysPassed = totalDaysInYear - days;
+        const percentage = Math.max(0, Math.min(100, (daysPassed / totalDaysInYear) * 100));
+        setProgressPercentage(percentage);
+      } else {
+        // Si ya pasó la fecha, mostrar ceros
+        setTimeLeft({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0
+        });
+        setProgressPercentage(100);
+      }
+    };
+
+    // Calcular inmediatamente
+    calculateTimeLeft();
+
+    // Actualizar cada segundo
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Función para formatear números con ceros a la izquierda
+  const formatNumber = (num: number) => {
+    return num < 10 ? `0${num}` : num.toString();
+  };
+
+  // Determinar el mensaje según el tiempo restante
+  const getCountdownMessage = () => {
+    const totalDays = timeLeft.days;
+    
+    if (totalDays > 60) {
+      return "Próximas elecciones generales";
+    } else if (totalDays > 30) {
+      return "¡Faltan pocos meses!";
+    } else if (totalDays > 14) {
+      return "¡Faltan pocas semanas!";
+    } else if (totalDays > 7) {
+      return "¡La cuenta regresiva final!";
+    } else if (totalDays > 1) {
+      return "¡Últimos días!";
+    } else if (totalDays === 1) {
+      return "¡Mañana son las elecciones!";
+    } else if (timeLeft.hours > 0) {
+      return "¡Hoy es el gran día!";
+    } else {
+      return "¡Las elecciones están en curso!";
+    }
+  };
+
+  return (
+    <View style={styles.countdownCard}>
+      <View style={styles.countdownHeader}>
+        <Target size={24} color={COLORS.text.white} />
+        <Text style={styles.countdownTitle}>{getCountdownMessage()}</Text>
+      </View>
+      <View style={styles.countdownContent}>
+        <Text style={styles.countdownNumber}>{timeLeft.days}</Text>
+        <Text style={styles.countdownLabel}>días restantes</Text>
+      </View>
+      <View style={styles.countdownDetails}>
+        <View style={styles.timeDetails}>
+          <View style={styles.timeItem}>
+            <Text style={styles.timeNumber}>{formatNumber(timeLeft.hours)}</Text>
+            <Text style={styles.timeLabel}>horas</Text>
+          </View>
+          <Text style={styles.timeSeparator}>:</Text>
+          <View style={styles.timeItem}>
+            <Text style={styles.timeNumber}>{formatNumber(timeLeft.minutes)}</Text>
+            <Text style={styles.timeLabel}>min</Text>
+          </View>
+          <Text style={styles.timeSeparator}>:</Text>
+          <View style={styles.timeItem}>
+            <Text style={styles.timeNumber}>{formatNumber(timeLeft.seconds)}</Text>
+            <Text style={styles.timeLabel}>seg</Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.countdownProgress}>
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+        </View>
+        <Text style={styles.progressText}>{progressPercentage.toFixed(1)}% del tiempo transcurrido</Text>
+      </View>
+    </View>
+  );
+};
+
+// Actualizar los eventos con días restantes reales
+const getEventosConTiempoReal = (): EventoElectoral[] => {
+  const now = new Date();
+  
+  // Fechas de referencia para calcular días restantes
+  const fechasReferencia = {
+    inicioProceso: new Date('2026-01-15T00:00:00-05:00'),
+    inscripcionCandidatos: new Date('2026-02-20T00:00:00-05:00'),
+    inicioCampania: new Date('2026-03-10T00:00:00-05:00'),
+    cierreCampania: new Date('2026-04-08T00:00:00-05:00'),
+    diaElecciones: new Date('2026-04-11T08:00:00-05:00'),
+    resultadosPreliminares: new Date('2026-04-13T00:00:00-05:00')
+  };
+
+  const calcularDiasRestantes = (fecha: Date): number => {
+    const diferencia = fecha.getTime() - now.getTime();
+    return Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+  };
+
+  const determinarEstado = (diasRestantes: number, esImportante: boolean = false): EventoElectoral['estado'] => {
+    if (diasRestantes < 0) return 'completado';
+    if (esImportante) return 'importante';
+    if (diasRestantes <= 7) return 'proximo';
+    return 'pendiente';
+  };
+
+  return [
+    {
+      id: 1,
+      fecha: '15 Enero 2026',
+      titulo: 'Inicio del Proceso Electoral',
+      descripcion: 'Convocatoria oficial a elecciones generales y publicación de cronograma',
+      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.inicioProceso)),
+      categoria: 'Administrativo',
+      diasRestantes: calcularDiasRestantes(fechasReferencia.inicioProceso)
+    },
+    {
+      id: 2,
+      fecha: '20 Febrero 2026',
+      titulo: 'Inscripción de Candidatos',
+      descripcion: 'Cierre de inscripción de listas electorales y verificación de requisitos',
+      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.inscripcionCandidatos)),
+      categoria: 'Candidatos',
+      diasRestantes: calcularDiasRestantes(fechasReferencia.inscripcionCandidatos)
+    },
+    {
+      id: 3,
+      fecha: '10 Marzo 2026',
+      titulo: 'Inicio de Campaña Electoral',
+      descripcion: 'Arranque oficial de campañas políticas en medios y territorios',
+      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.inicioCampania)),
+      categoria: 'Campaña',
+      diasRestantes: calcularDiasRestantes(fechasReferencia.inicioCampania)
+    },
+    {
+      id: 4,
+      fecha: '8 Abril 2026',
+      titulo: 'Cierre de Campaña Electoral',
+      descripcion: 'Fin de propaganda electoral y veda de medios',
+      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.cierreCampania)),
+      categoria: 'Campaña',
+      diasRestantes: calcularDiasRestantes(fechasReferencia.cierreCampania)
+    },
+    {
+      id: 5,
+      fecha: '11 Abril 2026',
+      titulo: 'Día de Elecciones Generales',
+      descripcion: 'Votación para Presidente, Vicepresidentes y Congresistas de la República',
+      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.diaElecciones), true),
+      categoria: 'Votación',
+      diasRestantes: calcularDiasRestantes(fechasReferencia.diaElecciones)
+    },
+    {
+      id: 6,
+      fecha: '13 Abril 2026',
+      titulo: 'Resultados Oficiales Preliminares',
+      descripcion: 'Proclamación de resultados preliminares por la ONPE',
+      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.resultadosPreliminares)),
+      categoria: 'Resultados',
+      diasRestantes: calcularDiasRestantes(fechasReferencia.resultadosPreliminares)
+    },
+  ];
+};
 
 // Componentes reutilizables
-const CountdownCard = () => (
-  <View style={styles.countdownCard}>
-    <View style={styles.countdownHeader}>
-      <Target size={24} color={COLORS.text.white} />
-      <Text style={styles.countdownTitle}>Días para las Elecciones</Text>
-    </View>
-    <View style={styles.countdownContent}>
-      <Text style={styles.countdownNumber}>37</Text>
-      <Text style={styles.countdownLabel}>días restantes</Text>
-    </View>
-    <View style={styles.countdownProgress}>
-      <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: '65%' }]} />
-      </View>
-      <Text style={styles.progressText}>65% del proceso completado</Text>
-    </View>
-  </View>
-);
-
 const EventIcon = ({ estado }: { estado: EventoElectoral['estado'] }) => {
   const iconProps = {
     size: 20,
@@ -236,7 +362,7 @@ const TimelineEvent = ({ evento, isLast }: { evento: EventoElectoral; isLast: bo
           {evento.descripcion}
         </Text>
 
-        {evento.diasRestantes && (
+        {evento.diasRestantes !== undefined && (
           <View style={styles.daysContainer}>
             <Text style={[
               styles.daysText,
@@ -286,6 +412,20 @@ const LegendItem = ({ icon: Icon, color, text }: {
 
 // Componente principal
 export default function CalendarScreen() {
+  const [eventos, setEventos] = useState<EventoElectoral[]>([]);
+
+  useEffect(() => {
+    // Actualizar eventos con tiempo real al montar el componente
+    setEventos(getEventosConTiempoReal());
+
+    // Actualizar cada minuto para mantener los días restantes actualizados
+    const interval = setInterval(() => {
+      setEventos(getEventosConTiempoReal());
+    }, 60000); // Actualizar cada minuto
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
@@ -497,7 +637,7 @@ const styles = StyleSheet.create({
   },
   countdownContent: {
     alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   countdownNumber: {
     fontSize: 56,
@@ -510,6 +650,36 @@ const styles = StyleSheet.create({
     color: '#FECACA',
     fontWeight: '500',
     marginTop: SPACING.xs,
+  },
+  countdownDetails: {
+    marginBottom: SPACING.lg,
+  },
+  timeDetails: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timeItem: {
+    alignItems: 'center',
+    minWidth: 50,
+  },
+  timeNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text.white,
+  },
+  timeLabel: {
+    fontSize: 11,
+    color: '#FECACA',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  timeSeparator: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FECACA',
+    marginHorizontal: SPACING.xs,
+    marginBottom: 8,
   },
   countdownProgress: {
     alignItems: 'center',
