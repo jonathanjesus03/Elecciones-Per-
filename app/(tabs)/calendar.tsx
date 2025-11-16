@@ -1,43 +1,53 @@
-import { AlertCircle, Calendar, CheckCircle2, Clock, ChevronRight, Target } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
-import { 
-  Platform, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  View,
+import { apiClient } from "@/api/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Target,
+} from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-// Constantes de diseño
+// ================== COLORES Y ESPACIADO ==================
 const COLORS = {
-  primary: '#8B1538',
-  primaryDark: '#6A102B',
-  primaryLight: '#FEF2F2',
-  secondary: '#1E40AF',
-  accent: '#DC2626',
+  primary: "#8B1538",
+  primaryDark: "#6A102B",
+  primaryLight: "#FEF2F2",
+  secondary: "#1E40AF",
+  accent: "#DC2626",
   background: {
-    light: '#F8FAFC',
-    white: '#FFFFFF',
-    card: '#FFFFFF',
+    light: "#F8FAFC",
+    white: "#FFFFFF",
+    card: "#FFFFFF",
   },
   text: {
-    primary: '#1F2937',
-    secondary: '#6B7280',
-    light: '#9CA3AF',
-    white: '#FFFFFF'
+    primary: "#1F2937",
+    secondary: "#6B7280",
+    light: "#9CA3AF",
+    white: "#FFFFFF",
   },
   status: {
-    completed: '#059669',
-    completedLight: '#D1FAE5',
-    upcoming: '#D97706',
-    upcomingLight: '#FEF3C7',
-    important: '#8B1538',
-    importantLight: '#FEE2E2',
-    pending: '#6B7280',
-    pendingLight: '#F3F4F6'
-  }
+    completed: "#059669",
+    completedLight: "#D1FAE5",
+    upcoming: "#D97706",
+    upcomingLight: "#FEF3C7",
+    important: "#8B1538",
+    importantLight: "#FEE2E2",
+    pending: "#6B7280",
+    pendingLight: "#F3F4F6",
+  },
 } as const;
 
 const SPACING = {
@@ -46,98 +56,100 @@ const SPACING = {
   md: 16,
   lg: 20,
   xl: 24,
-  xxl: 32
+  xxl: 32,
 } as const;
 
-// Tipos y datos
-interface EventoElectoral {
+// ================== TIPOS ==================
+type RoleType = "ALL" | "ELECTOR" | "MESA";
+type EventType = "ELECTION" | "TRAINING" | "DEADLINE" | "OTHER";
+
+type RolUsuario = "info" | "elector" | "mesa" | "ambos";
+
+interface BackendEvent {
   id: number;
-  fecha: string;
-  titulo: string;
-  descripcion: string;
-  estado: 'completado' | 'proximo' | 'importante' | 'pendiente';
-  categoria?: string;
-  diasRestantes?: number;
+  title: string;
+  description: string;
+  date: string; // ISO
+  type: EventType;
+  targetRole: RoleType;
 }
 
-// Componente CountdownCard actualizado con tiempo real
-const CountdownCard = () => {
+type EstadoEvento = "completado" | "proximo" | "importante" | "pendiente";
+
+interface EventoElectoral {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  fecha: string;     // formateada
+  isoDate: string;   // original
+  estado: EstadoEvento;
+  categoria: string;
+  diasRestantes: number;
+  type: EventType;
+  targetRole: RoleType;
+}
+
+// ================== COUNTDOWN ==================
+const CountdownCard = ({ electionDate }: { electionDate?: string }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0
+    seconds: 0,
   });
-
   const [progressPercentage, setProgressPercentage] = useState(0);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      // Fecha de las elecciones: 11 de Abril de 2026, 8:00 AM (hora de Perú)
-      const electionDate = new Date('2026-04-11T08:00:00-05:00'); // UTC-5 para Perú
-      const now = new Date();
-      const difference = electionDate.getTime() - now.getTime();
+      const target = electionDate
+        ? new Date(electionDate)
+        : new Date("2026-04-11T08:00:00-05:00");
 
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      const now = new Date();
+      const diff = target.getTime() - now.getTime();
+
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor(
+          (diff % (1000 * 60 * 60)) / (1000 * 60)
+        );
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
         setTimeLeft({ days, hours, minutes, seconds });
 
-        // Calcular porcentaje de progreso (considerando un año completo antes de las elecciones)
-        const totalDaysInYear = 365;
-        const daysPassed = totalDaysInYear - days;
-        const percentage = Math.max(0, Math.min(100, (daysPassed / totalDaysInYear) * 100));
+        const totalDays = 365;
+        const daysPassed = totalDays - days;
+        const percentage = Math.max(
+          0,
+          Math.min(100, (daysPassed / totalDays) * 100)
+        );
         setProgressPercentage(percentage);
       } else {
-        // Si ya pasó la fecha, mostrar ceros
-        setTimeLeft({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0
-        });
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setProgressPercentage(100);
       }
     };
 
-    // Calcular inmediatamente
     calculateTimeLeft();
-
-    // Actualizar cada segundo
     const timer = setInterval(calculateTimeLeft, 1000);
-
     return () => clearInterval(timer);
-  }, []);
+  }, [electionDate]);
 
-  // Función para formatear números con ceros a la izquierda
-  const formatNumber = (num: number) => {
-    return num < 10 ? `0${num}` : num.toString();
-  };
+  const formatNumber = (n: number) => (n < 10 ? `0${n}` : n.toString());
 
-  // Determinar el mensaje según el tiempo restante
   const getCountdownMessage = () => {
-    const totalDays = timeLeft.days;
-    
-    if (totalDays > 60) {
-      return "Próximas elecciones generales";
-    } else if (totalDays > 30) {
-      return "¡Faltan pocos meses!";
-    } else if (totalDays > 14) {
-      return "¡Faltan pocas semanas!";
-    } else if (totalDays > 7) {
-      return "¡La cuenta regresiva final!";
-    } else if (totalDays > 1) {
-      return "¡Últimos días!";
-    } else if (totalDays === 1) {
-      return "¡Mañana son las elecciones!";
-    } else if (timeLeft.hours > 0) {
-      return "¡Hoy es el gran día!";
-    } else {
-      return "¡Las elecciones están en curso!";
-    }
+    const d = timeLeft.days;
+    if (d > 60) return "Próximas elecciones generales";
+    if (d > 30) return "¡Faltan pocos meses!";
+    if (d > 14) return "¡Faltan pocas semanas!";
+    if (d > 7) return "¡La cuenta regresiva final!";
+    if (d > 1) return "¡Últimos días!";
+    if (d === 1) return "¡Mañana son las elecciones!";
+    if (timeLeft.hours > 0) return "¡Hoy es el gran día!";
+    return "¡Las elecciones están en curso!";
   };
 
   return (
@@ -153,142 +165,156 @@ const CountdownCard = () => {
       <View style={styles.countdownDetails}>
         <View style={styles.timeDetails}>
           <View style={styles.timeItem}>
-            <Text style={styles.timeNumber}>{formatNumber(timeLeft.hours)}</Text>
+            <Text style={styles.timeNumber}>
+              {formatNumber(timeLeft.hours)}
+            </Text>
             <Text style={styles.timeLabel}>horas</Text>
           </View>
           <Text style={styles.timeSeparator}>:</Text>
           <View style={styles.timeItem}>
-            <Text style={styles.timeNumber}>{formatNumber(timeLeft.minutes)}</Text>
+            <Text style={styles.timeNumber}>
+              {formatNumber(timeLeft.minutes)}
+            </Text>
             <Text style={styles.timeLabel}>min</Text>
           </View>
           <Text style={styles.timeSeparator}>:</Text>
           <View style={styles.timeItem}>
-            <Text style={styles.timeNumber}>{formatNumber(timeLeft.seconds)}</Text>
+            <Text style={styles.timeNumber}>
+              {formatNumber(timeLeft.seconds)}
+            </Text>
             <Text style={styles.timeLabel}>seg</Text>
           </View>
         </View>
       </View>
       <View style={styles.countdownProgress}>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+          <View
+            style={[styles.progressFill, { width: `${progressPercentage}%` }]}
+          />
         </View>
-        <Text style={styles.progressText}>{progressPercentage.toFixed(1)}% del tiempo transcurrido</Text>
+        <Text style={styles.progressText}>
+          {progressPercentage.toFixed(1)}% del tiempo transcurrido
+        </Text>
       </View>
     </View>
   );
 };
 
-// Actualizar los eventos con días restantes reales
-const getEventosConTiempoReal = (): EventoElectoral[] => {
+// ================== HELPERS EVENTOS ==================
+const calcularDiasRestantes = (isoDate: string) => {
   const now = new Date();
-  
-  // Fechas de referencia para calcular días restantes
-  const fechasReferencia = {
-    inicioProceso: new Date('2026-01-15T00:00:00-05:00'),
-    inscripcionCandidatos: new Date('2026-02-20T00:00:00-05:00'),
-    inicioCampania: new Date('2026-03-10T00:00:00-05:00'),
-    cierreCampania: new Date('2026-04-08T00:00:00-05:00'),
-    diaElecciones: new Date('2026-04-11T08:00:00-05:00'),
-    resultadosPreliminares: new Date('2026-04-13T00:00:00-05:00')
-  };
-
-  const calcularDiasRestantes = (fecha: Date): number => {
-    const diferencia = fecha.getTime() - now.getTime();
-    return Math.ceil(diferencia / (1000 * 60 * 60 * 24));
-  };
-
-  const determinarEstado = (diasRestantes: number, esImportante: boolean = false): EventoElectoral['estado'] => {
-    if (diasRestantes < 0) return 'completado';
-    if (esImportante) return 'importante';
-    if (diasRestantes <= 7) return 'proximo';
-    return 'pendiente';
-  };
-
-  return [
-    {
-      id: 1,
-      fecha: '15 Enero 2026',
-      titulo: 'Inicio del Proceso Electoral',
-      descripcion: 'Convocatoria oficial a elecciones generales y publicación de cronograma',
-      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.inicioProceso)),
-      categoria: 'Administrativo',
-      diasRestantes: calcularDiasRestantes(fechasReferencia.inicioProceso)
-    },
-    {
-      id: 2,
-      fecha: '20 Febrero 2026',
-      titulo: 'Inscripción de Candidatos',
-      descripcion: 'Cierre de inscripción de listas electorales y verificación de requisitos',
-      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.inscripcionCandidatos)),
-      categoria: 'Candidatos',
-      diasRestantes: calcularDiasRestantes(fechasReferencia.inscripcionCandidatos)
-    },
-    {
-      id: 3,
-      fecha: '10 Marzo 2026',
-      titulo: 'Inicio de Campaña Electoral',
-      descripcion: 'Arranque oficial de campañas políticas en medios y territorios',
-      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.inicioCampania)),
-      categoria: 'Campaña',
-      diasRestantes: calcularDiasRestantes(fechasReferencia.inicioCampania)
-    },
-    {
-      id: 4,
-      fecha: '8 Abril 2026',
-      titulo: 'Cierre de Campaña Electoral',
-      descripcion: 'Fin de propaganda electoral y veda de medios',
-      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.cierreCampania)),
-      categoria: 'Campaña',
-      diasRestantes: calcularDiasRestantes(fechasReferencia.cierreCampania)
-    },
-    {
-      id: 5,
-      fecha: '11 Abril 2026',
-      titulo: 'Día de Elecciones Generales',
-      descripcion: 'Votación para Presidente, Vicepresidentes y Congresistas de la República',
-      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.diaElecciones), true),
-      categoria: 'Votación',
-      diasRestantes: calcularDiasRestantes(fechasReferencia.diaElecciones)
-    },
-    {
-      id: 6,
-      fecha: '13 Abril 2026',
-      titulo: 'Resultados Oficiales Preliminares',
-      descripcion: 'Proclamación de resultados preliminares por la ONPE',
-      estado: determinarEstado(calcularDiasRestantes(fechasReferencia.resultadosPreliminares)),
-      categoria: 'Resultados',
-      diasRestantes: calcularDiasRestantes(fechasReferencia.resultadosPreliminares)
-    },
-  ];
+  const date = new Date(isoDate);
+  const diff = date.getTime() - now.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
-// Componentes reutilizables
-const EventIcon = ({ estado }: { estado: EventoElectoral['estado'] }) => {
-  const iconProps = {
-    size: 20,
-    color: COLORS.text.white
-  };
+const mapCategoria = (type: EventType, targetRole: RoleType): string => {
+  switch (type) {
+    case "ELECTION":
+      return "Jornada electoral";
+    case "TRAINING":
+      return targetRole === "MESA"
+        ? "Capacitación miembros de mesa"
+        : "Capacitación";
+    case "DEADLINE":
+      return "Fecha límite";
+    default:
+      return targetRole === "MESA"
+        ? "Miembros de mesa"
+        : "Proceso electoral";
+  }
+};
+
+// 👉 Ajusto umbrales para que ya existan “Próximo” / “Importante”
+const mapEstado = (
+  type: EventType,
+  diasRestantes: number
+): EstadoEvento => {
+  if (diasRestantes < 0) return "completado";
+
+  if (type === "ELECTION") {
+    if (diasRestantes <= 7) return "importante";
+    if (diasRestantes <= 60) return "proximo";
+    return "pendiente";
+  }
+
+  if (type === "DEADLINE") {
+    if (diasRestantes <= 7) return "importante";
+    if (diasRestantes <= 21) return "proximo";
+    return "pendiente";
+  }
+
+  if (type === "TRAINING") {
+    if (diasRestantes <= 14) return "proximo";
+    return "pendiente";
+  }
+
+  // OTHER
+  if (diasRestantes <= 30) return "proximo";
+  return "pendiente";
+};
+
+const formatFecha = (isoDate: string) => {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString("es-PE", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const filterEventsByRole = (
+  events: EventoElectoral[],
+  userRole: RolUsuario | null
+) => {
+  // info => solo ALL
+  if (!userRole || userRole === "info") {
+    return events.filter((ev) => ev.targetRole === "ALL");
+  }
+
+  const allowed: RoleType[] = ["ALL"];
+
+  if (userRole === "mesa" || userRole === "ambos") {
+    allowed.push("MESA");
+  }
+  if (userRole === "elector" || userRole === "ambos") {
+    allowed.push("ELECTOR");
+  }
+
+  return events.filter((ev) => allowed.includes(ev.targetRole));
+};
+
+// ================== COMPONENTES REUTILIZABLES ==================
+const EventIcon = ({ estado }: { estado: EstadoEvento }) => {
+  const iconProps = { size: 20, color: COLORS.text.white };
 
   switch (estado) {
-    case 'completado':
+    case "completado":
       return <CheckCircle2 {...iconProps} />;
-    case 'proximo':
+    case "proximo":
       return <AlertCircle {...iconProps} />;
-    case 'importante':
+    case "importante":
       return <Calendar {...iconProps} />;
     default:
       return <Clock {...iconProps} />;
   }
 };
 
-const EventBadge = ({ estado, categoria }: { estado: EventoElectoral['estado'], categoria?: string }) => {
+const EventBadge = ({
+  estado,
+  categoria,
+}: {
+  estado: EstadoEvento;
+  categoria?: string;
+}) => {
   const getBadgeStyle = () => {
     switch (estado) {
-      case 'completado':
+      case "completado":
         return styles.badgeCompleted;
-      case 'proximo':
+      case "proximo":
         return styles.badgeUpcoming;
-      case 'importante':
+      case "importante":
         return styles.badgeImportant;
       default:
         return styles.badgePending;
@@ -304,16 +330,22 @@ const EventBadge = ({ estado, categoria }: { estado: EventoElectoral['estado'], 
   );
 };
 
-const TimelineEvent = ({ evento, isLast }: { evento: EventoElectoral; isLast: boolean }) => {
+const TimelineEvent = ({
+  evento,
+  isLast,
+}: {
+  evento: EventoElectoral;
+  isLast: boolean;
+}) => {
   const [expanded, setExpanded] = useState(false);
 
   const getEventStyle = () => {
     switch (evento.estado) {
-      case 'completado':
+      case "completado":
         return styles.eventCompleted;
-      case 'proximo':
+      case "proximo":
         return styles.eventUpcoming;
-      case 'importante':
+      case "importante":
         return styles.eventImportant;
       default:
         return styles.eventPending;
@@ -322,11 +354,11 @@ const TimelineEvent = ({ evento, isLast }: { evento: EventoElectoral; isLast: bo
 
   const getDotStyle = () => {
     switch (evento.estado) {
-      case 'completado':
+      case "completado":
         return styles.dotCompleted;
-      case 'proximo':
+      case "proximo":
         return styles.dotUpcoming;
-      case 'importante':
+      case "importante":
         return styles.dotImportant;
       default:
         return styles.dotPending;
@@ -335,16 +367,13 @@ const TimelineEvent = ({ evento, isLast }: { evento: EventoElectoral; isLast: bo
 
   return (
     <View style={styles.timelineItem}>
-      {/* Línea del timeline */}
       {!isLast && <View style={styles.timelineLine} />}
-      
-      {/* Punto del timeline */}
+
       <View style={[styles.timelineDot, getDotStyle()]}>
         <EventIcon estado={evento.estado} />
       </View>
 
-      {/* Tarjeta del evento */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.eventCard, getEventStyle()]}
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.9}
@@ -354,41 +383,51 @@ const TimelineEvent = ({ evento, isLast }: { evento: EventoElectoral; isLast: bo
             <Calendar size={16} color={COLORS.text.secondary} />
             <Text style={styles.eventDate}>{evento.fecha}</Text>
           </View>
-          <EventBadge estado={evento.estado} categoria={evento.categoria} />
+          <EventBadge
+            estado={evento.estado}
+            categoria={evento.categoria}
+          />
         </View>
 
         <Text style={styles.eventTitle}>{evento.titulo}</Text>
-        <Text style={styles.eventDescription} numberOfLines={expanded ? undefined : 2}>
+        <Text
+          style={styles.eventDescription}
+          numberOfLines={expanded ? undefined : 2}
+        >
           {evento.descripcion}
         </Text>
 
-        {evento.diasRestantes !== undefined && (
-          <View style={styles.daysContainer}>
-            <Text style={[
+        <View style={styles.daysContainer}>
+          <Text
+            style={[
               styles.daysText,
-              evento.diasRestantes < 0 ? styles.daysPast : 
-              evento.diasRestantes === 0 ? styles.daysToday : 
-              styles.daysFuture
-            ]}>
-              {evento.diasRestantes < 0 ? 
-                `Hace ${Math.abs(evento.diasRestantes)} días` : 
-                evento.diasRestantes === 0 ? 
-                'Hoy' : 
-                `En ${evento.diasRestantes} días`
-              }
-            </Text>
-          </View>
-        )}
+              evento.diasRestantes < 0
+                ? styles.daysPast
+                : evento.diasRestantes === 0
+                ? styles.daysToday
+                : styles.daysFuture,
+            ]}
+          >
+            {evento.diasRestantes < 0
+              ? `Hace ${Math.abs(evento.diasRestantes)} días`
+              : evento.diasRestantes === 0
+              ? "Hoy"
+              : `En ${evento.diasRestantes} días`}
+          </Text>
+        </View>
 
         <View style={styles.eventFooter}>
           <View style={styles.expandButton}>
             <Text style={styles.expandText}>
-              {expanded ? 'Ver menos' : 'Ver más'}
+              {expanded ? "Ver menos" : "Ver más"}
             </Text>
-            <ChevronRight 
-              size={16} 
-              color={COLORS.primary} 
-              style={[styles.expandIcon, expanded && styles.expandIconRotated]} 
+            <ChevronRight
+              size={16}
+              color={COLORS.primary}
+              style={[
+                styles.expandIcon,
+                expanded && styles.expandIconRotated,
+              ]}
             />
           </View>
         </View>
@@ -397,10 +436,14 @@ const TimelineEvent = ({ evento, isLast }: { evento: EventoElectoral; isLast: bo
   );
 };
 
-const LegendItem = ({ icon: Icon, color, text }: { 
-  icon: React.ComponentType<any>; 
-  color: string; 
-  text: string; 
+const LegendItem = ({
+  icon: Icon,
+  color,
+  text,
+}: {
+  icon: React.ComponentType<any>;
+  color: string;
+  text: string;
 }) => (
   <View style={styles.legendItem}>
     <View style={[styles.legendIcon, { backgroundColor: color }]}>
@@ -410,25 +453,107 @@ const LegendItem = ({ icon: Icon, color, text }: {
   </View>
 );
 
-// Componente principal
+// ================== COMPONENTE PRINCIPAL ==================
 export default function CalendarScreen() {
   const [eventos, setEventos] = useState<EventoElectoral[]>([]);
+  const [nextEvent, setNextEvent] = useState<EventoElectoral | null>(null);
+  const [userRole, setUserRole] = useState<RolUsuario | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const electionDateIso = eventos.find(
+    (e) => e.type === "ELECTION"
+  )?.isoDate;
 
   useEffect(() => {
-    // Actualizar eventos con tiempo real al montar el componente
-    setEventos(getEventosConTiempoReal());
+    const loadEvents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    // Actualizar cada minuto para mantener los días restantes actualizados
-    const interval = setInterval(() => {
-      setEventos(getEventosConTiempoReal());
-    }, 60000); // Actualizar cada minuto
+        const storedRole = (await AsyncStorage.getItem("@role")) as
+          | RolUsuario
+          | null;
+        setUserRole(storedRole || "info");
 
-    return () => clearInterval(interval);
+        const [allRes, nextRes] = await Promise.all([
+          apiClient.get<BackendEvent[]>("/events"),
+          apiClient.get<BackendEvent>("/events/next").catch(() => null),
+        ]);
+
+        const mapBackendEvent = (ev: BackendEvent): EventoElectoral => {
+          const diasRestantes = calcularDiasRestantes(ev.date);
+          const categoria = mapCategoria(ev.type, ev.targetRole);
+          const estado = mapEstado(ev.type, diasRestantes);
+
+          return {
+            id: ev.id,
+            titulo: ev.title,
+            descripcion: ev.description,
+            fecha: formatFecha(ev.date),
+            isoDate: ev.date,
+            estado,
+            categoria,
+            diasRestantes,
+            type: ev.type,
+            targetRole: ev.targetRole,
+          };
+        };
+
+        const mappedAll = allRes.data
+          .sort(
+            (a, b) =>
+              new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+          .map(mapBackendEvent);
+
+        const filtered = filterEventsByRole(mappedAll, storedRole || "info");
+        setEventos(filtered);
+
+        if (nextRes && nextRes.data) {
+          setNextEvent(mapBackendEvent(nextRes.data));
+        }
+      } catch (e) {
+        console.error("Error cargando eventos", e);
+        setError(
+          "No se pudo cargar el calendario electoral. Intenta nuevamente más tarde."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
   }, []);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text
+            style={{
+              marginTop: 12,
+              color: COLORS.text.secondary,
+              fontSize: 14,
+            }}
+          >
+            Cargando calendario electoral...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -440,71 +565,119 @@ export default function CalendarScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Calendario Electoral</Text>
-              <Text style={styles.headerSubtitle}>Elecciones Generales 2026</Text>
+              <Text style={styles.headerSubtitle}>
+                Elecciones Generales 2026
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Bandera Peruana */}
+        {/* Bandera Perú */}
         <View style={styles.flagStripe}>
-          <View style={[styles.stripeSection, { backgroundColor: COLORS.primary }]} />
-          <View style={[styles.stripeSection, { backgroundColor: COLORS.background.white }]} />
-          <View style={[styles.stripeSection, { backgroundColor: COLORS.primary }]} />
+          <View
+            style={[
+              styles.stripeSection,
+              { backgroundColor: COLORS.primary },
+            ]}
+          />
+          <View
+            style={[
+              styles.stripeSection,
+              { backgroundColor: COLORS.background.white },
+            ]}
+          />
+          <View
+            style={[
+              styles.stripeSection,
+              { backgroundColor: COLORS.primary },
+            ]}
+          />
         </View>
 
         {/* Contador principal */}
         <View style={styles.section}>
-          <CountdownCard />
+          <CountdownCard electionDate={electionDateIso} />
         </View>
 
-        {/* Timeline de eventos */}
+        {/* Próximo hito (usando /events/next) */}
+        {nextEvent && (
+          <View style={styles.section}>
+            <View style={styles.legendCard}>
+              <Text style={styles.legendTitle}>Próximo hito del cronograma</Text>
+              <Text style={styles.eventTitle}>{nextEvent.titulo}</Text>
+              <Text style={styles.eventDate}>{nextEvent.fecha}</Text>
+              <Text
+                style={styles.eventDescription}
+                numberOfLines={3}
+              >
+                {nextEvent.descripcion}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Timeline */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Cronograma Electoral</Text>
-            <Text style={styles.sectionSubtitle}>Proceso completo de las elecciones 2026</Text>
+            <Text style={styles.sectionSubtitle}>
+              Fechas clave del proceso electoral 2026
+            </Text>
           </View>
 
-          <View style={styles.timelineContainer}>
-            {eventos.map((evento, index) => (
-              <TimelineEvent 
-                key={evento.id} 
-                evento={evento} 
-                isLast={index === eventos.length - 1} 
-              />
-            ))}
-          </View>
+          {error ? (
+            <View style={styles.infoCard}>
+              <View style={styles.infoIcon}>
+                <AlertCircle size={20} color={COLORS.primary} />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>No se pudo cargar</Text>
+                <Text style={styles.infoText}>{error}</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.timelineContainer}>
+              {eventos.map((evento, index) => (
+                <TimelineEvent
+                  key={evento.id}
+                  evento={evento}
+                  isLast={index === eventos.length - 1}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
-        {/* Leyenda y información */}
+        {/* Leyenda */}
         <View style={styles.section}>
           <View style={styles.legendCard}>
             <Text style={styles.legendTitle}>Estados del Proceso</Text>
             <View style={styles.legendGrid}>
-              <LegendItem 
-                icon={CheckCircle2} 
-                color={COLORS.status.completed} 
-                text="Completado" 
+              <LegendItem
+                icon={CheckCircle2}
+                color={COLORS.status.completed}
+                text="Completado"
               />
-              <LegendItem 
-                icon={AlertCircle} 
-                color={COLORS.status.upcoming} 
-                text="Próximo" 
+              <LegendItem
+                icon={AlertCircle}
+                color={COLORS.status.upcoming}
+                text="Próximo"
               />
-              <LegendItem 
-                icon={Calendar} 
-                color={COLORS.status.important} 
-                text="Día Electoral" 
+              <LegendItem
+                icon={Calendar}
+                color={COLORS.status.important}
+                text="Día clave / Elección"
               />
-              <LegendItem 
-                icon={Clock} 
-                color={COLORS.status.pending} 
-                text="Pendiente" 
+              <LegendItem
+                icon={Clock}
+                color={COLORS.status.pending}
+                text="Pendiente"
               />
             </View>
           </View>
         </View>
 
-        {/* Información adicional */}
+        {/* Nota informativa */}
         <View style={styles.infoCard}>
           <View style={styles.infoIcon}>
             <AlertCircle size={20} color={COLORS.primary} />
@@ -512,8 +685,9 @@ export default function CalendarScreen() {
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>Información Importante</Text>
             <Text style={styles.infoText}>
-              Todas las fechas están sujetas a confirmación oficial por el JNE y ONPE. 
-              Consulte fuentes oficiales para información actualizada.
+              Las fechas mostradas se basan en el cronograma electoral
+              oficial. Ante cualquier cambio, prevalece lo publicado por
+              el JNE y la ONPE en sus canales institucionales.
             </Text>
           </View>
         </View>
@@ -521,6 +695,7 @@ export default function CalendarScreen() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
