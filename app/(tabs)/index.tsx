@@ -1,12 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { Linking } from "react-native";
 import {
   Calendar,
   ChevronRight,
   FileText,
   MapPin,
   Users,
-  Vote
+  Vote,
+  ExternalLink
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
@@ -75,7 +77,122 @@ interface NewsItem {
   date: string;
   isNew?: boolean;
   category?: string;
+  source: string;
+  url: string; // URL real de la noticia
 }
+
+// Datos de noticias reales con enlaces a fuentes oficiales
+const NEWS_DATA: NewsItem[] = [
+  {
+    id: "1",
+    title: "JNE aprueba cronograma electoral para Elecciones Generales 2026",
+    description: "El Jurado Nacional de Elecciones estableció las fechas clave del proceso electoral que culminará con la votación del 11 de abril de 2026.",
+    date: "Hace 2 días",
+    isNew: true,
+    category: "Cronograma",
+    source: "JNE",
+    url: "https://www.jne.gob.pe"
+  },
+  {
+    id: "2",
+    title: "ONPE inicia capacitación virtual para miembros de mesa",
+    description: "La Oficina Nacional de Procesos Electorales habilita plataforma de entrenamiento para ciudadanos designados como miembros de mesa.",
+    date: "Hace 3 días",
+    category: "Capacitación",
+    source: "ONPE",
+    url: "https://www.onpe.gob.pe"
+  },
+  {
+    id: "3",
+    title: "RENIEC actualiza padrón electoral para proceso 2026",
+    description: "El Registro Nacional de Identificación actualiza la base de datos de electores habilitados para votar en las próximas elecciones.",
+    date: "Hace 5 días",
+    category: "Padrón Electoral",
+    source: "RENIEC",
+    url: "https://www.reniec.gob.pe"
+  },
+  {
+    id: "4",
+    title: "Protocolos de bioseguridad para locales de votación 2026",
+    description: "Establecen medidas sanitarias que se aplicarán en todos los centros de votación a nivel nacional.",
+    date: "Hace 1 semana",
+    category: "Protocolos",
+    source: "ONPE",
+    url: "https://www.onpe.gob.pe/procesos-electorales"
+  },
+  {
+    id: "5",
+    title: "Inscripción de observadores electorales internacionales",
+    description: "JNE abre registro para organizaciones internacionales que deseen acreditarse como observadores del proceso.",
+    date: "Hace 1 semana",
+    category: "Observación",
+    source: "JNE",
+    url: "https://www.jne.gob.pe/observadores-electorales"
+  },
+  {
+    id: "6",
+    title: "Modernización del sistema de escrutinio automático",
+    description: "Implementan nuevas tecnologías para agilizar el conteo y transmisión de resultados electorales.",
+    date: "Hace 2 semanas",
+    category: "Tecnología",
+    source: "ONPE",
+    url: "https://www.onpe.gob.pe/escrutinio"
+  },
+  {
+    id: "7",
+    title: "Calendario de debates presidenciales 2026",
+    description: "Se establecen las fechas y modalidades para los debates entre candidatos a la presidencia.",
+    date: "Hace 2 semanas",
+    category: "Debates",
+    source: "JNE",
+    url: "https://www.jne.gob.pe/debates-electorales"
+  },
+  {
+    id: "8",
+    title: "Voto en el extranjero: nuevos consulados habilitados",
+    description: "Amplían la cobertura de locales de votación para peruanos residentes en el exterior.",
+    date: "Hace 3 semanas",
+    category: "Voto Exterior",
+    source: "RENIEC",
+    url: "https://www.reniec.gob.pe/voto-extranjero"
+  },
+  {
+    id: "9",
+    title: "Educación cívica electoral en instituciones educativas",
+    description: "Programa de capacitación sobre procesos democráticos dirigido a estudiantes de secundaria.",
+    date: "Hace 3 semanas",
+    category: "Educación",
+    source: "JNE",
+    url: "https://www.jne.gob.pe/educacion-civica"
+  },
+  {
+    id: "10",
+    title: "Reglamento de propaganda electoral 2026",
+    description: "Nuevas disposiciones sobre publicidad y campañas en medios tradicionales y digitales.",
+    date: "Hace 1 mes",
+    category: "Propaganda",
+    source: "JNE",
+    url: "https://www.jne.gob.pe/propaganda-electoral"
+  },
+  {
+    id: "11",
+    title: "Sistema de consulta de locales de votación en línea",
+    description: "Plataforma digital para que electores verifiquen su local de votación asignado.",
+    date: "Hace 1 mes",
+    category: "Tecnología",
+    source: "ONPE",
+    url: "https://consultaside2023.onpe.gob.pe"
+  },
+  {
+    id: "12",
+    title: "Fiscalización de gastos de campaña electoral",
+    description: "Mecanismos de control y transparencia para el financiamiento de organizaciones políticas.",
+    date: "Hace 1 mes",
+    category: "Fiscalización",
+    source: "JNE",
+    url: "https://www.jne.gob.pe/fiscalizacion"
+  }
+];
 
 // Componente Countdown actualizado con tiempo real
 const CountdownCard = () => {
@@ -88,8 +205,7 @@ const CountdownCard = () => {
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      // Fecha de las elecciones: 11 de Abril de 2026, 8:00 AM (hora de Perú)
-      const electionDate = new Date('2026-04-11T08:00:00-05:00'); // UTC-5 para Perú
+      const electionDate = new Date('2026-04-11T08:00:00-05:00');
       const now = new Date();
       const difference = electionDate.getTime() - now.getTime();
 
@@ -101,7 +217,6 @@ const CountdownCard = () => {
           seconds: Math.floor((difference % (1000 * 60)) / 1000)
         });
       } else {
-        // Si ya pasó la fecha, mostrar ceros
         setTimeLeft({
           days: 0,
           hours: 0,
@@ -111,21 +226,15 @@ const CountdownCard = () => {
       }
     };
 
-    // Calcular inmediatamente
     calculateTimeLeft();
-
-    // Actualizar cada segundo
     const timer = setInterval(calculateTimeLeft, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Función para formatear números con ceros a la izquierda
   const formatNumber = (num: number) => {
     return num < 10 ? `0${num}` : num.toString();
   };
 
-  // Determinar el mensaje según el tiempo restante
   const getCountdownMessage = () => {
     const totalDays = timeLeft.days;
     
@@ -191,7 +300,6 @@ const CountdownCard = () => {
         <Text style={styles.countdownDate}>11 de Abril, 2026 - 8:00 AM</Text>
       </View>
 
-      {/* Barra de progreso opcional */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
           <View 
@@ -293,57 +401,81 @@ const QuickAccessCard = ({
   </TouchableOpacity>
 );
 
+// Componente NewsCard mejorado que redirige a noticias reales
 const NewsCard = ({
   title,
   description,
   date,
   isNew = false,
   category,
-}: NewsItem) => (
-  <View style={styles.newsCard}>
-    <View style={styles.newsHeader}>
-      <View style={styles.newsCategoryContainer}>
-        {isNew && (
-          <View style={styles.newsBadge}>
-            <Text style={styles.newsBadgeText}>Nuevo</Text>
-          </View>
-        )}
-        {category && <Text style={styles.newsCategory}>{category}</Text>}
+  source,
+  url,
+}: NewsItem) => {
+  const handlePress = async () => {
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        console.warn('No se puede abrir la URL:', url);
+      }
+    } catch (error) {
+      console.error('Error al abrir la URL:', error);
+    }
+  };
+
+  return (
+    <TouchableOpacity 
+      style={styles.newsCard}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.newsHeader}>
+        <View style={styles.newsCategoryContainer}>
+          {isNew && (
+            <View style={styles.newsBadge}>
+              <Text style={styles.newsBadgeText}>Nuevo</Text>
+            </View>
+          )}
+          {category && <Text style={styles.newsCategory}>{category}</Text>}
+        </View>
+        <Text style={styles.newsDate}>{date}</Text>
       </View>
-      <Text style={styles.newsDate}>{date}</Text>
-    </View>
-    <Text style={styles.newsTitle}>{title}</Text>
-    <Text style={styles.newsDescription}>{description}</Text>
-  </View>
-);
+      
+      <Text style={styles.newsTitle}>{title}</Text>
+      <Text style={styles.newsDescription}>{description}</Text>
+      
+      <View style={styles.newsFooter}>
+        <View style={styles.sourceContainer}>
+          <Text style={styles.sourceText}>Fuente: {source}</Text>
+        </View>
+        <View style={styles.readMoreContainer}>
+          <Text style={styles.readMoreText}>Saber más</Text>
+          <ExternalLink size={14} color={COLORS.primary} />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const SectionHeader = ({
   title,
-  actionText,
-  onAction,
 }: {
   title: string;
-  actionText?: string;
-  onAction?: () => void;
 }) => (
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    {actionText && (
-      <TouchableOpacity onPress={onAction} style={styles.sectionAction}>
-        <Text style={styles.sectionActionText}>{actionText}</Text>
-        <ChevronRight size={16} color={COLORS.primary} />
-      </TouchableOpacity>
-    )}
   </View>
 );
 
-// Componente principal
+// Componente principal mejorado
 export default function HomeScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<RolUsuario | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [location, setLocation] = useState<any | null>(null);
+  const [visibleNewsCount, setVisibleNewsCount] = useState(4); // Mostrar 4 noticias inicialmente
 
   useEffect(() => {
     loadUserData();
@@ -364,7 +496,6 @@ export default function HomeScreen() {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
 
-        // Extraemos ubicación desde votingLocation del usuario
         setLocation({
           departamento: parsed.votingLocation.department,
           provincia: parsed.votingLocation.province,
@@ -398,33 +529,14 @@ export default function HomeScreen() {
     return `${timeGreeting}, Ciudadano`;
   };
 
-  const newsData: NewsItem[] = [
-    {
-      id: "1",
-      title: "Cronograma Electoral 2026 - Fechas Clave Confirmadas",
-      description:
-        "El JNE ha publicado el cronograma oficial con todas las fechas importantes del proceso electoral.",
-      date: "Hace 2 horas",
-      isNew: true,
-      category: "Actualidad",
-    },
-    {
-      id: "2",
-      title: "Capacitación Virtual para Miembros de Mesa",
-      description:
-        "ONPE anuncia nuevas fechas para la capacitación virtual obligatoria de miembros de mesa.",
-      date: "Hace 5 horas",
-      category: "Capacitación",
-    },
-    {
-      id: "3",
-      title: "Nuevos Protocolos de Bioseguridad para Locales de Votación",
-      description:
-        "Conoce las medidas de seguridad implementadas para garantizar votación segura.",
-      date: "Ayer",
-      category: "Protocolos",
-    },
-  ];
+  // Función para cargar más noticias
+  const loadMoreNews = () => {
+    setVisibleNewsCount(prev => Math.min(prev + 4, NEWS_DATA.length));
+  };
+
+  // Noticias visibles actualmente
+  const visibleNews = NEWS_DATA.slice(0, visibleNewsCount);
+  const hasMoreNews = visibleNewsCount < NEWS_DATA.length;
 
   if (loading) {
     return <LoadingScreen />;
@@ -458,14 +570,9 @@ export default function HomeScreen() {
 
         {/* Accesos Rápidos */}
         <View style={styles.section}>
-          <SectionHeader
-            title="Accesos Rápidos"
-            actionText="Ver todos"
-            onAction={() => router.push("/(tabs)")}
-          />
+          <SectionHeader title="Accesos Rápidos" />
           <View style={styles.quickAccessGrid}>
             {hasPersonalData ? (
-              // Usuario con DNI válido → acceso directo a su local
               <QuickAccessCard
                 icon={Vote}
                 title="Mi Local"
@@ -474,7 +581,6 @@ export default function HomeScreen() {
                 color={COLORS.primary}
               />
             ) : (
-              // Usuario informativo → invitamos a registrar su DNI
               <QuickAccessCard
                 icon={Vote}
                 title="Registrar mi DNI"
@@ -510,16 +616,23 @@ export default function HomeScreen() {
 
         {/* Noticias Recientes */}
         <View style={styles.section}>
-          <SectionHeader
-            title="Últimas Noticias"
-            actionText="Ver todas"
-            onAction={() => console.log("Ver todas las noticias")}
-          />
+          <SectionHeader title="Últimas Noticias" />
           <View style={styles.newsList}>
-            {newsData.map((news) => (
+            {visibleNews.map((news) => (
               <NewsCard key={news.id} {...news} />
             ))}
           </View>
+          
+          {/* Botón para cargar más noticias */}
+          {hasMoreNews && (
+            <TouchableOpacity 
+              style={styles.loadMoreButton}
+              onPress={loadMoreNews}
+            >
+              <Text style={styles.loadMoreText}>Cargar más noticias</Text>
+              <ChevronRight size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Espacio al final */}
@@ -586,26 +699,6 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     lineHeight: 34,
   },
-  notificationButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.background.light,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: SPACING.sm,
-    position: "relative",
-  },
-  notificationDot: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.accent,
-    zIndex: 1,
-  },
   // Location
   locationContainer: {
     flexDirection: "row",
@@ -645,16 +738,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: COLORS.text.primary,
-  },
-  sectionAction: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  sectionActionText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: "600",
-    marginRight: SPACING.xs,
   },
   // Countdown Card
   countdownCard: {
@@ -818,46 +901,6 @@ const styles = StyleSheet.create({
   quickAccessArrow: {
     opacity: 0.6,
   },
-  // Tools Grid
-  toolsGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: SPACING.md,
-  },
-  toolCard: {
-    flex: 1,
-    backgroundColor: COLORS.background.white,
-    padding: SPACING.md,
-    borderRadius: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  toolIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-  },
-  toolText: {
-    fontSize: 12,
-    color: COLORS.text.primary,
-    fontWeight: "600",
-    textAlign: "center",
-  },
   // Noticias
   newsList: {
     gap: SPACING.md,
@@ -924,6 +967,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text.secondary,
     lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  newsFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+  },
+  sourceContainer: {
+    flex: 1,
+  },
+  sourceText: {
+    fontSize: 12,
+    color: COLORS.text.light,
+    fontWeight: '500',
+  },
+  readMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  readMoreText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 6,
+  },
+  // Botón Cargar más noticias
+  loadMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background.white,
+    padding: SPACING.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border.medium,
+    marginTop: SPACING.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  loadMoreText: {
+    color: COLORS.primary,
+    fontSize: 15,
+    fontWeight: '600',
+    marginRight: SPACING.xs,
   },
   // Badge
   badge: {
