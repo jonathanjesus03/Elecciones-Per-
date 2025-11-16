@@ -2,104 +2,113 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ArrowRight, Calendar, MapPin, Users, Vote } from 'lucide-react-native';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width } = Dimensions.get('window');
 
 export default function OnboardingScreen1() {
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <LinearGradient
+        colors={['#FEF2F2', '#FFFFFF', '#FFFFFF']}
+        style={styles.gradientBackground}
       >
-        {/* Header con logo y bandera */}
-        <View style={styles.headerSection}>
-          {/* TODO: Reemplaza 'logo-peru-elecciones.png' con tu imagen */}
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>🇵🇪</Text>
-            <Text style={styles.logoSubtext}>LOGO AQUÍ</Text>
-          </View>
+        {/* Contenedor principal sin ScrollView */}
+        <View style={styles.contentWrapper}>
           
-          <View style={styles.titleContainer}>
-            <Text style={styles.appName}>VotoPeru</Text>
-            <Text style={styles.subtitle}>Elecciones 2026</Text>
+          {/* Zona superior (todo lo que puede crecer) */}
+          <View style={styles.topSection}>
+            {/* Header minimalista */}
+            <View style={styles.headerSection}>
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={['#DC2626', '#B91C1C']}
+                  style={styles.logoGradient}
+                >
+                  <Text style={styles.logoEmoji}>🇵🇪</Text>
+                </LinearGradient>
+              </View>
+              
+              <Text style={styles.appName}>InfoVoto</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>ELECCIONES 2026</Text>
+              </View>
+            </View>
+
+            {/* Hero Section */}
+            <View style={styles.heroSection}>
+              <Text style={styles.heroTitle}>
+                Tu Voz,{'\n'}Tu Voto,{'\n'}
+                <Text style={styles.heroTitleHighlight}>Tu Futuro</Text>
+              </Text>
+              
+              <Text style={styles.heroDescription}>
+                La plataforma para ejercer tu derecho al voto de manera 
+                informada y responsable.
+              </Text>
+            </View>
+
+            {/* Features (dejamos todo pero más compacto) */}
+            <View style={styles.featuresGrid}>
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#FEE2E2' }]}>
+                  <Calendar size={24} color="#DC2626" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Calendario</Text>
+                <Text style={styles.featureDesc}>Fechas clave</Text>
+              </View>
+
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#DBEAFE' }]}>
+                  <Vote size={24} color="#2563EB" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Propuestas</Text>
+                <Text style={styles.featureDesc}>Candidatos</Text>
+              </View>
+
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#D1FAE5' }]}>
+                  <MapPin size={24} color="#059669" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Tu Local</Text>
+                <Text style={styles.featureDesc}>Dónde votas</Text>
+              </View>
+
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                  <Users size={24} color="#D97706" strokeWidth={2.3} />
+                </View>
+                <Text style={styles.featureTitle}>Guía Mesa</Text>
+                <Text style={styles.featureDesc}>Capacitación</Text>
+              </View>
+            </View>
+
           </View>
 
-          {/* Franja decorativa con colores patrios */}
-          <View style={styles.banderaStripe}>
-            <View style={[styles.stripeSection, { backgroundColor: '#B91C1C' }]} />
-            <View style={[styles.stripeSection, { backgroundColor: '#FFFFFF' }]} />
-            <View style={[styles.stripeSection, { backgroundColor: '#B91C1C' }]} />
+          {/* Zona inferior fija: botón */}
+          <View style={styles.bottomSection}>
+            <TouchableOpacity 
+              style={styles.mainButton} 
+              onPress={() => router.push('/(onboarding)/role')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#DC2626', '#B91C1C', '#991B1B']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>Comenzar Ahora</Text>
+                <View style={styles.buttonIconContainer}>
+                  <ArrowRight size={20} color="white" strokeWidth={3} />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
+
         </View>
-
-        {/* Contenido principal */}
-        <View style={styles.contentSection}>
-          <Text style={styles.welcomeTitle}>
-            Bienvenido a tu guía electoral
-          </Text>
-          
-          <Text style={styles.description}>
-            Centralizamos toda la información que necesitas para las elecciones 2026: 
-            calendario electoral, propuestas de partidos, tu local de votación y tus 
-            responsabilidades como miembro de mesa.
-          </Text>
-
-          {/* Features con iconos */}
-          <View style={styles.featuresContainer}>
-            <View style={styles.featureItem}>
-              <View style={styles.iconCircle}>
-                <Calendar size={24} color="#B91C1C" />
-              </View>
-              <Text style={styles.featureText}>Calendario electoral completo</Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <View style={styles.iconCircle}>
-                <Vote size={24} color="#B91C1C" />
-              </View>
-              <Text style={styles.featureText}>Propuestas de candidatos</Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <View style={styles.iconCircle}>
-                <MapPin size={24} color="#B91C1C" />
-              </View>
-              <Text style={styles.featureText}>Tu local de votación</Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <View style={styles.iconCircle}>
-                <Users size={24} color="#B91C1C" />
-              </View>
-              <Text style={styles.featureText}>Guía de miembro de mesa</Text>
-            </View>
-          </View>
-
-          {/* Mensaje motivacional */}
-          <View style={styles.motivationalBox}>
-            <Text style={styles.motivationalText}>
-              "Tu voto construye el Perú del mañana"
-            </Text>
-          </View>
-        </View>
-
-        {/* Botón de continuar */}
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => router.push('/(onboarding)/role')}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#B91C1C', '#991B1B']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.buttonGradient}
-          >
-            <Text style={styles.buttonText}>Comenzar</Text>
-            <ArrowRight size={22} color="white" style={{ marginLeft: 8 }} />
-          </LinearGradient>
-        </TouchableOpacity>
-      </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -109,150 +118,194 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
-    paddingTop: 40,
+  gradientBackground: {
+    flex: 1,
   },
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+    justifyContent: 'space-between',
+  },
+
+  // Top section
+  topSection: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+
+  // Bottom section (botón fijo)
+  bottomSection: {
+    paddingTop: 8,
+  },
+
+  // Header
   headerSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24, // antes 40
   },
-  logoPlaceholder: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 60,
+  logoContainer: {
+    marginBottom: 12,
+  },
+  logoGradient: {
+    width: 64,    // antes 80
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 3,
-    borderColor: '#B91C1C',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  logoText: {
-    fontSize: 48,
-  },
-  logoSubtext: {
-    fontSize: 10,
-    color: '#666',
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
+  logoEmoji: {
+    fontSize: 32,
   },
   appName: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#B91C1C',
-    letterSpacing: 0.5,
+    fontSize: 26, // antes 32
+    fontWeight: '800',
+    color: '#1F2937',
+    letterSpacing: -0.5,
+    marginBottom: 6,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '600',
-    marginTop: 4,
+  badge: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
-  banderaStripe: {
-    flexDirection: 'row',
-    width: '100%',
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginTop: 12,
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
-  stripeSection: {
-    flex: 1,
-  },
-  contentSection: {
-    flex: 1,
-    marginBottom: 24,
-  },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 16,
-    textAlign: 'center',
-    lineHeight: 34,
-  },
-  description: {
-    fontSize: 16,
-    color: '#4A4A4A',
-    lineHeight: 24,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  featuresContainer: {
-    gap: 16,
-    marginBottom: 24,
-  },
-  featureItem: {
-    flexDirection: 'row',
+
+  // Hero Section
+  heroSection: {
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#B91C1C',
+    marginBottom: 24, // antes 40
+    paddingHorizontal: 8,
   },
-  iconCircle: {
+  heroTitle: {
+    fontSize: 34, // antes 42
+    fontWeight: '900',
+    color: '#111827',
+    textAlign: 'center',
+    lineHeight: 40,
+    marginBottom: 12,
+    letterSpacing: -0.8,
+  },
+  heroTitleHighlight: {
+    color: '#DC2626',
+  },
+  heroDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 320,
+  },
+
+  // Features Grid
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20, // antes 32
+  },
+  featureCard: {
+    width: (width - 64) / 2,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14, // más compactos
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  featureIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 8,
   },
-  featureText: {
-    fontSize: 15,
-    color: '#2A2A2A',
-    fontWeight: '600',
-    flex: 1,
-  },
-  motivationalBox: {
-    backgroundColor: '#FEF2F2',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    alignItems: 'center',
-  },
-  motivationalText: {
-    fontSize: 17,
-    color: '#991B1B',
+  featureTitle: {
+    fontSize: 14,
     fontWeight: '700',
-    fontStyle: 'italic',
+    color: '#111827',
+    marginBottom: 2,
     textAlign: 'center',
   },
-  button: {
-    marginTop: 16,
-    marginBottom: 20,
-    borderRadius: 30,
+  featureDesc: {
+    fontSize: 11,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+
+  // CTA Section
+  ctaSection: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16, // antes 24
+    marginBottom: 8, // antes 24
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  checkmarkList: {
+    gap: 10,
+  },
+  checkmarkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  checkmarkText: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '500',
+    flex: 1,
+  },
+
+  // Main Button
+  mainButton: {
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#B91C1C',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
   },
   buttonGradient: {
-    paddingVertical: 18,
-    paddingHorizontal: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  buttonIconContainer: {
+    marginLeft: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
